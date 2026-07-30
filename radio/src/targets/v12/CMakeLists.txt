@@ -75,6 +75,9 @@ add_definitions(
 
 set(SDRAM ON)
 
+# UART4 on the external 3-pin header (no switchable power rail)
+set(AUX_SERIAL ON)
+
 # Handset supports external antenna selection via hardware GPIO switch
 set(EXTERNAL_ANTENNA ON)
 add_definitions(-DEXTERNAL_ANTENNA)
