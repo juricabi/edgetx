@@ -201,8 +201,12 @@ static void ghostSendPulses(void* ctx, uint8_t* buffer, int16_t* channels, uint8
       *p_data++ = getGhostModuleAddr();
       // and length
       *p_data++ = 12;
-      memcpy(p_data, f_data, 12);
-      p_data += 12; f_data += 12;
+      // byte-wise: this buffer is non-cacheable memory on some targets, where
+      // the unaligned wide accesses memcpy emits at this offset are faulting
+      for (uint8_t i = 0; i < 12; i++) {
+        *(volatile uint8_t*)p_data++ = f_data[i];
+      }
+      f_data += 12;
       len -= 12;
     }
     outputTelemetryBuffer.reset();
