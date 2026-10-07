@@ -25,6 +25,8 @@
 #include "definitions.h"
 #include "dma2d.h"
 
+volatile bool dma2dCacheDirty = false;
+
 #if !LV_USE_GPU_STM32_DMA2D
 /**
  * Turn on the peripheral and set output color mode, this only needs to be done once
@@ -85,6 +87,7 @@ void DMACopyBitmap(uint16_t *dest, uint16_t destw, uint16_t desth, uint16_t x,
   LL_DMA2D_FGND_SetAlpha(DMA2D, 0);
 
   /* Start Transfer */
+  dma2dCacheDirty = true;
   LL_DMA2D_Start(DMA2D);
 
 }
@@ -126,6 +129,7 @@ void DMACopyAlphaBitmap(uint16_t *dest, uint16_t destw, uint16_t desth,
   LL_DMA2D_BGND_SetAlpha(DMA2D, 0);
 
   /* Start Transfer */
+  dma2dCacheDirty = true;
   LL_DMA2D_Start(DMA2D);
 
 }
@@ -171,6 +175,7 @@ void DMACopyAlphaMask(uint16_t *dest, uint16_t destw, uint16_t desth,
   LL_DMA2D_BGND_SetAlpha(DMA2D, 0);
 
   /* Start Transfer */
+  dma2dCacheDirty = true;
   LL_DMA2D_Start(DMA2D);
 
 }
@@ -201,6 +206,7 @@ void DMABitmapConvert(uint16_t * dest, const uint8_t * src, uint16_t w, uint16_t
   LL_DMA2D_FGND_SetAlpha(DMA2D, 0);
 
   /* Start Transfer */
+  dma2dCacheDirty = true;
   LL_DMA2D_Start(DMA2D);
 
 }

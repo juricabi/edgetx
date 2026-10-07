@@ -52,6 +52,11 @@ class BitmapBuffer
 
   void setDrawCtx(lv_draw_ctx_t* ctx) { draw_ctx = ctx; }
 
+  // Lua tools (StandaloneLuaWindow): solid, opaque lines and rectangles go straight into
+  // the pixels instead of through one LVGL canvas call each (which sets up a whole draw
+  // context per call: per row of a filled triangle). The window invalidates itself.
+  void setFastDraw(bool on) { fastDraw = on; }
+
   void setData(uint16_t* d);
 
   void clear(LcdFlags flags = 0);
@@ -255,4 +260,6 @@ class BitmapBuffer
   lv_obj_t* canvas = nullptr;
 #endif
   lv_draw_ctx_t* draw_ctx = nullptr;
+  bool fastDraw = false;
+  void fastFill(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t color);
 };
