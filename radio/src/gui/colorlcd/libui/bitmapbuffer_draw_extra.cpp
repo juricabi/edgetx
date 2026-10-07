@@ -43,10 +43,7 @@ void BitmapBuffer::invertRect(coord_t x, coord_t y, coord_t w, coord_t h,
   pixel_t bg_color = COLOR_VAL(COLOR_THEME_PRIMARY2);
   RGB_SPLIT(bg_color, bgRed, bgGreen, bgBlue);
 
-  DMAWait();
-#if __CORTEX_M >= 0x07
-  SCB_CleanInvalidateDCache();
-#endif
+  DMAWaitAndSyncCache();
 
   for (int i = y; i < y + h; i++) {
     pixel_t *p = getPixelPtrAbs(x, i);
@@ -366,17 +363,21 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2,
   int px = x1;
   int py = y1;
 
-  DMAWait();
-#if __CORTEX_M >= 0x07
-  SCB_CleanInvalidateDCache();
-#endif
+  DMAWaitAndSyncCache();
+
+  // the clipper keeps the line inside the buffer; the pointer check is a safety net
+  pixel_t* const lo = data;
+  pixel_t* const hi = data_end;
+#define LINE_PIXEL(px, py)                         \
+  {                                                \
+    pixel_t* p = getPixelPtrAbs(px, py);           \
+    if (p >= lo && p < hi) *p = color;             \
+  }
 
   if (dxabs >= dyabs) {
     /* the line is more horizontal than vertical */
     for (int i = 0; i <= dxabs; i++) {
-      if ((1 << (px % 8)) & pat) {
-        drawPixelAbs(px, py, color);
-      }
+      if ((1 << (px % 8)) & pat) LINE_PIXEL(px, py);
       y += dyabs;
       if (y >= dxabs) {
         y -= dxabs;
@@ -387,9 +388,7 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2,
   } else {
     /* the line is more vertical than horizontal */
     for (int i = 0; i <= dyabs; i++) {
-      if ((1 << (py % 8)) & pat) {
-        drawPixelAbs(px, py, color);
-      }
+      if ((1 << (py % 8)) & pat) LINE_PIXEL(px, py);
       x += dxabs;
       if (x >= dyabs) {
         x -= dyabs;
@@ -398,6 +397,7 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2,
       py += sdy;
     }
   }
+#undef LINE_PIXEL
 }
 
 /*
@@ -665,10 +665,7 @@ void BitmapBuffer::drawBitmapPatternPie(coord_t x, coord_t y,
   int w2 = width / 2;
   int h2 = height / 2;
 
-  DMAWait();
-#if __CORTEX_M >= 0x07
-  SCB_CleanInvalidateDCache();
-#endif
+  DMAWaitAndSyncCache();
 
   for (int y1 = h2 - 1; y1 >= 0; y1--) {
     for (int x1 = w2 - 1; x1 >= 0; x1--) {
