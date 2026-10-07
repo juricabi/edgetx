@@ -56,12 +56,10 @@ void lcdSetFlushCb(void (*cb)(lv_disp_drv_t*, uint16_t*, const rect_t&))
   lcd_flush_cb = cb;
 }
 
-#if defined(SIMU)
-// Only used in simulator to prevent lock up when closing simulator
-// TODO: find a better way to handle this
+// Simulator: prevents a lock up when closing it. Radios whose driver sends frames in the
+// background: services the transfer while LVGL waits for it.
 static void (*lcd_wait_cb)(lv_disp_drv_t*) = nullptr;
 void lcdSetWaitCb(void (*cb)(lv_disp_drv_t*)) { lcd_wait_cb = cb; }
-#endif
 
 extern "C" void lcdFlushed()
 {
@@ -171,9 +169,7 @@ static void init_lvgl_disp_drv()
   disp_drv.draw_buf = &disp_buf; /*Set an initialized buffer*/
   disp_drv.flush_cb = flushLcd;  /*Set a flush callback to draw to the display*/
   disp_drv.monitor_cb = perfMonitorCb;
-#if defined(SIMU)
   disp_drv.wait_cb = lcd_wait_cb; /*Set a wait callback*/
-#endif
 
   disp_drv.hor_res = LCD_W; /*Set the horizontal resolution in pixels*/
   disp_drv.ver_res = LCD_H; /*Set the vertical resolution in pixels*/
