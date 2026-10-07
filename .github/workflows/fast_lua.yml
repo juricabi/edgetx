@@ -1,0 +1,118 @@
+---
+name: Build fast Lua tools firmware
+# Color radio firmware from this branch (fast-lua-20ms): EdgeTX main plus faster Lua tools.
+# Every push that changes the firmware rebuilds it and replaces the "fast-lua-20ms" prerelease.
+on:
+  push:
+    branches:
+      - 'fast-lua-20ms'
+    paths:
+      - '.github/workflows/fast_lua.yml'
+      - 'cmake/**'
+      - 'radio/**'
+      - 'tools/build-gh.sh'
+      - 'tools/build-common.sh'
+      - '.gitmodules'
+      - 'CMakeLists.txt'
+  workflow_dispatch:
+
+concurrency:
+  group: 'fast-lua-20ms'
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build firmware
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # color radios only: the change is for color screens
+        target:
+          - nv14;el18;nb4p
+          - pl18;pl18ev;pl18u
+          - pa01
+          - t15;t16;t18;t22
+          - tx16s;f16;v16
+          - tx16smk3
+          - x10;x10express
+          - x12s
+          - st16
+          - c14
+          - tx15;gx15
+          - t15pro
+          - v12
+    container:
+      image: ghcr.io/edgetx/edgetx-dev:latest
+      volumes:
+        - ${{ github.workspace }}:/src
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Build firmware ${{ matrix.target }}
+        env:
+          FLAVOR: ${{ matrix.target }}
+          EDGETX_VERSION_SUFFIX: fastlua
+          CMAKE_BUILD_PARALLEL_LEVEL: 4
+        run: ./tools/build-gh.sh
+
+      - name: Package firmware ${{ matrix.target }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: edgetx-firmware-fastlua-${{ matrix.target }}
+          path: |
+            fw.json
+            LICENSE
+            *.bin
+            *.uf2
+          retention-days: 30
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy prerelease
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: edgetx-firmware-fastlua-*
+          path: edgetx-firmware-fastlua
+          merge-multiple: true
+
+      - name: Zip release file
+        run: |
+          name=edgetx-firmware-fastlua-${GITHUB_SHA::8}.zip
+          (cd edgetx-firmware-fastlua && zip -qq -r "../$name" .)
+          echo "release_filename=$name" >> "$GITHUB_ENV"
+          echo "build_date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_ENV"
+
+      - name: Delete the previous build
+        run: gh release delete fast-lua-20ms --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy prerelease
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: fast-lua-20ms
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          name: "Fast Lua tools (20 ms)"
+          body: |
+            ## Fast Lua tools: color radio firmware
+
+            EdgeTX `main` plus one change, from branch `fast-lua-20ms`. While a Lua tool
+            (SYS > Tools) is open, the UI loop runs every 20 ms instead of 50 ms and each
+            frame goes to the screen as soon as the tool has drawn it. With no tool open the
+            radio runs exactly like stock `main`. SYS > Version shows `-fastlua`.
+
+            **Commit:** ${{ github.sha }}
+            **Built:** ${{ env.build_date }}
+
+            These are test builds of a development branch: back up your SD card first.
+          files: ${{ env.release_filename }}
