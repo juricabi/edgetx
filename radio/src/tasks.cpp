@@ -53,6 +53,19 @@ mutex_handle_t audioMutex;
 
 #define MENU_TASK_PERIOD (50)  // 50ms
 
+#if defined(COLORLCD) && defined(LUA)
+// StickTime build: while a full screen Lua tool (a game) runs, the UI loop runs every 20 ms
+// instead of 50 ms, so the tool gets up to 50 frames a second. Everything else is unchanged.
+#define MENU_TASK_PERIOD_LUA_TOOL (20)
+bool standaloneLuaActive();  // gui/colorlcd/standalone_lua.cpp
+static uint32_t menuTaskPeriod()
+{
+  return standaloneLuaActive() ? MENU_TASK_PERIOD_LUA_TOOL : MENU_TASK_PERIOD;
+}
+#else
+static uint32_t menuTaskPeriod() { return MENU_TASK_PERIOD; }
+#endif
+
 #if defined(COLORLCD) && defined(CLI)
 bool perMainEnabled = true;
 #endif
@@ -97,7 +110,7 @@ static void menusTask()
 #endif
     DEBUG_TIMER_STOP(debugTimerPerMain);
 
-    sleep_until(&next_tick, MENU_TASK_PERIOD);
+    sleep_until(&next_tick, menuTaskPeriod());
     resetForcePowerOffRequest();
   }
 
