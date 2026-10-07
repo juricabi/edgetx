@@ -24,13 +24,28 @@
 #include "edgetx_types.h"
 
 #if !defined(SIMU) && !defined(BOOT)
-static inline void DMAWait()
+static inline __attribute__((always_inline)) void DMAWait()
 {
   while(DMA2D->CR & DMA2D_CR_START);
 }
 #else
 static inline void DMAWait() {}
 #endif
+
+// Set when a DMA2D transfer starts. Code that draws with the CPU must clean and invalidate
+// the data cache (Cortex-M7) only if DMA2D wrote memory since that was last done: a full
+// clean and invalidate on every lcd.drawLine slows Lua drawing on H7 radios a lot.
+extern volatile bool dma2dCacheDirty;
+static inline __attribute__((always_inline)) void DMAWaitAndSyncCache()
+{
+  DMAWait();
+#if __CORTEX_M >= 0x07
+  if (dma2dCacheDirty) {
+    dma2dCacheDirty = false;
+    SCB_CleanInvalidateDCache();
+  }
+#endif
+}
 
 void DMAInit();
 void DMAFillRect(uint16_t * dest, uint16_t destw, uint16_t desth, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);

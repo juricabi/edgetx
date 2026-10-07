@@ -225,11 +225,7 @@ void BitmapBuffer::drawBitmap(coord_t x, coord_t y, const BitmapBuffer *bmp,
       DMACopyBitmap(data, _width, _height, x, y, bmp->getData(), bmpw, bmph,
                     srcx, srcy, srcw, srch);
     }
-    DMAWait();
-
-#if __CORTEX_M >= 0x07
-    SCB_CleanInvalidateDCache();
-#endif
+    DMAWaitAndSyncCache();
   } else {
     int scaledw = srcw * scale;
     int scaledh = srch * scale;
@@ -311,11 +307,38 @@ void BitmapBuffer::drawHorizontalLine(coord_t x, coord_t y, coord_t w,
   drawHorizontalLineAbs(x, y, w, pat, flags, opacity);
 }
 
+// x, y, w, h are absolute and already clipped. Writes two pixels per store.
+void BitmapBuffer::fastFill(coord_t x, coord_t y, coord_t w, coord_t h,
+                            pixel_t color)
+{
+  typedef uint32_t __attribute__((may_alias)) pixel_pair_t;
+  if (w <= 0 || h <= 0 || !data) return;
+  DMAWaitAndSyncCache();
+  const pixel_pair_t pair = color | ((uint32_t)color << 16);
+  for (coord_t j = 0; j < h; j++) {
+    pixel_t* p = getPixelPtrAbs(x, y + j);
+    if (p < data || p + w > data_end) return;
+    coord_t n = w;
+    if ((uintptr_t)p & 2) {
+      *p++ = color;
+      n--;
+    }
+    pixel_pair_t* q = (pixel_pair_t*)p;
+    for (; n >= 2; n -= 2) *q++ = pair;
+    if (n) *(pixel_t*)q = color;
+  }
+}
+
 void BitmapBuffer::drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w,
                                          uint8_t pat, LcdFlags flags,
                                          uint8_t opacity)
 {
   if (opacity == OPACITY_MAX) return;
+
+  if (fastDraw && !draw_ctx && pat == SOLID && opacity == 0) {
+    fastFill(x, y, w, 1, COLOR_VAL(flags));
+    return;
+  }
 
   if (draw_ctx) {
     x += draw_ctx->buf_area->x1;
@@ -360,6 +383,11 @@ void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h,
 
   coord_t w = 1;
   if (!applyClippingRect(x, y, w, h)) return;
+
+  if (fastDraw && !draw_ctx && pat == SOLID && opacity == 0) {
+    fastFill(x, y, 1, h, COLOR_VAL(flags));
+    return;
+  }
 
   if (draw_ctx) {
     x += draw_ctx->buf_area->x1;
@@ -429,6 +457,11 @@ void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h,
     for (coord_t i = y; i < y + h; i++) {
       drawHorizontalLineAbs(x, i, w, pat, flags, opacity);
     }
+    return;
+  }
+
+  if (fastDraw && !draw_ctx && opacity == 0) {
+    fastFill(x, y, w, h, COLOR_VAL(flags));
     return;
   }
 

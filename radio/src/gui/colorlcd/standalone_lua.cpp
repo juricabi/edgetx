@@ -22,6 +22,7 @@
 #include "standalone_lua.h"
 
 #include "dma2d.h"
+#include "timers_driver.h"
 #include "keys.h"
 #include "lua/lua_event.h"
 #include "view_main.h"
@@ -127,6 +128,11 @@ StandaloneLuaWindow* StandaloneLuaWindow::_instance;
 // StickTime build: tells the UI task to run its loop faster while a Lua tool is open
 bool standaloneLuaActive() { return StandaloneLuaWindow::instance() != nullptr; }
 
+// StickTime build: how long the tool's last run() took, and how long putting that frame on
+// the screen took (waiting for the display, then LVGL drawing it), in microseconds. The
+// tool reads them as the globals TOOL_RUN_US and TOOL_SHOW_US.
+static uint32_t toolRunUs = 0, toolShowUs = 0;
+
 StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
     Window(MainWindow::instance(), {0, 0, LCD_W, LCD_H}),
     useLvgl(useLvgl), initFunction(initFn), runFunction(runFn)
@@ -156,6 +162,7 @@ StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
   } else {
     lcdBuffer = new BitmapBuffer(BMP_RGB565, LCD_W, LCD_H);
     lcdBuffer->addCanvas(this);
+    lcdBuffer->setFastDraw(true);
 
     lcdBuffer->clear();
     lcdBuffer->drawText(LCD_W / 2, LCD_H / 2 - EdgeTxStyles::STD_FONT_HEIGHT, STR_LOADING,
@@ -245,6 +252,11 @@ void StandaloneLuaWindow::checkEvents()
     closeWindow();
   } else {
     if (runFunction != LUA_REFNIL) {
+      lua_pushinteger(lsStandalone, toolRunUs);
+      lua_setglobal(lsStandalone, "TOOL_RUN_US");
+      lua_pushinteger(lsStandalone, toolShowUs);
+      lua_setglobal(lsStandalone, "TOOL_SHOW_US");
+      uint32_t t0 = timersGetUsTick();
       lua_rawgeti(lsStandalone, LUA_REGISTRYINDEX, runFunction);
 
       lua_pushunsigned(lsStandalone, evt.event);
@@ -278,7 +290,10 @@ void StandaloneLuaWindow::checkEvents()
             } else {
               invalidate();
               // StickTime build: show the frame now, not at the next UI cycle
+              uint32_t t1 = timersGetUsTick();
               lv_refr_now(nullptr);
+              toolRunUs = t1 - t0;
+              toolShowUs = timersGetUsTick() - t1;
             }
           }
         } else if (lua_isstring(lsStandalone, -1)) {
