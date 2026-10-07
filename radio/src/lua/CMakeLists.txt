@@ -71,3 +71,14 @@ add_compile_definitions(LUA_COMPAT_5_2)
 foreach(FILE ${LUA_SRC})
   set(SRC ${SRC} ${LUA_DIR}/${FILE})
 endforeach()
+
+# StickTime build: on targets that set LUA_FAST_CODE_ITCM (firmware in SDRAM, ITCM free),
+# the functions marked LUAI_FASTCODE run from ITCM, and the files that hold the
+# interpreter's hot paths are compiled for speed instead of size.
+if(LUA_FAST_CODE_ITCM)
+  add_definitions(-DLUA_FAST_CODE_ITCM)
+  foreach(FILE lapi.c ldo.c lfunc.c lgc.c lmem.c lobject.c lstate.c lstring.c ltable.c ltm.c
+               lvm.c lbaselib.c lmathlib.c lauxlib.c ltablib.c)
+    set_source_files_properties(${LUA_DIR}/${FILE} PROPERTIES COMPILE_FLAGS -O2)
+  endforeach()
+endif()

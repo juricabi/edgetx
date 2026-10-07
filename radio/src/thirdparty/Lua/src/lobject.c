@@ -38,7 +38,7 @@ LUAI_DDEF const TValue luaO_nilobject_ = {NILCONSTANT};
 ** (eeeeexxx), where the real value is (1xxx) * 2^(eeeee - 1) if
 ** eeeee != 0 and (xxx) otherwise.
 */
-int luaO_int2fb (unsigned int x) {
+LUAI_FASTCODE int luaO_int2fb (unsigned int x) {
   int e = 0;  /* exponent */
   if (x < 8) return x;
   while (x >= (8 << 4)) {  /* coarse steps */
@@ -54,7 +54,7 @@ int luaO_int2fb (unsigned int x) {
 
 
 /* converts back */
-int luaO_fb2int (int x) {
+LUAI_FASTCODE int luaO_fb2int (int x) {
   return (x < 8) ? x : ((x & 7) + 8) << ((x >> 3) - 1);
 }
 
@@ -62,7 +62,7 @@ int luaO_fb2int (int x) {
 /*
 ** Computes ceil(log2(x))
 */
-int luaO_ceillog2 (unsigned int x) {
+LUAI_FASTCODE int luaO_ceillog2 (unsigned int x) {
   static const lu_byte log_2[256] = {  /* log_2[i] = ceil(log2(i - 1)) */
     0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
     6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
@@ -80,7 +80,7 @@ int luaO_ceillog2 (unsigned int x) {
 }
 
 
-static lua_Integer intarith (lua_State *L, int op, lua_Integer v1,
+LUAI_FASTCODE static lua_Integer intarith (lua_State *L, int op, lua_Integer v1,
                                                    lua_Integer v2) {
   switch (op) {
     case LUA_OPADD: return intop(+, v1, v2);
@@ -100,7 +100,7 @@ static lua_Integer intarith (lua_State *L, int op, lua_Integer v1,
 }
 
 
-static lua_Number numarith (lua_State *L, int op, lua_Number v1,
+LUAI_FASTCODE static lua_Number numarith (lua_State *L, int op, lua_Number v1,
                                                   lua_Number v2) {
   switch (op) {
     case LUA_OPADD: return luai_numadd(L, v1, v2);
@@ -120,7 +120,7 @@ static lua_Number numarith (lua_State *L, int op, lua_Number v1,
 }
 
 
-void luaO_arith (lua_State *L, int op, const TValue *p1, const TValue *p2,
+LUAI_FASTCODE void luaO_arith (lua_State *L, int op, const TValue *p1, const TValue *p2,
                  TValue *res) {
   switch (op) {
     case LUA_OPBAND: case LUA_OPBOR: case LUA_OPBXOR:
@@ -160,13 +160,13 @@ void luaO_arith (lua_State *L, int op, const TValue *p1, const TValue *p2,
 }
 
 
-int luaO_hexavalue (int c) {
+LUAI_FASTCODE int luaO_hexavalue (int c) {
   if (lisdigit(c)) return c - '0';
   else return (ltolower(c) - 'a') + 10;
 }
 
 
-static int isneg (const char **s) {
+LUAI_FASTCODE static int isneg (const char **s) {
   if (**s == '-') { (*s)++; return 1; }
   else if (**s == '+') (*s)++;
   return 0;
@@ -190,7 +190,7 @@ static int isneg (const char **s) {
 ** convert an hexadecimal numeric string to a number, following
 ** C99 specification for 'strtod'
 */
-static lua_Number lua_strx2number (const char *s, char **endptr) {
+LUAI_FASTCODE static lua_Number lua_strx2number (const char *s, char **endptr) {
   int dot = lua_getlocaledecpoint();
   lua_Number r = 0.0;  /* result (accumulator) */
   int sigdig = 0;  /* number of significant digits */
@@ -248,7 +248,7 @@ static lua_Number lua_strx2number (const char *s, char **endptr) {
 #define L_MAXLENNUM	200
 #endif
 
-static const char *l_str2dloc (const char *s, lua_Number *result, int mode) {
+LUAI_FASTCODE static const char *l_str2dloc (const char *s, lua_Number *result, int mode) {
   char *endptr;
   *result = (mode == 'x') ? lua_strx2number(s, &endptr)  /* try to convert */
                           : lua_str2number(s, &endptr);
@@ -271,7 +271,7 @@ static const char *l_str2dloc (const char *s, lua_Number *result, int mode) {
 ** to a buffer (because 's' is read-only), changes the dot to the
 ** current locale radix mark, and tries to convert again.
 */
-static const char *l_str2d (const char *s, lua_Number *result) {
+LUAI_FASTCODE static const char *l_str2d (const char *s, lua_Number *result) {
   const char *endptr;
   const char *pmode = strpbrk(s, ".xXnN");
   int mode = pmode ? ltolower(cast_uchar(*pmode)) : 0;
@@ -296,7 +296,7 @@ static const char *l_str2d (const char *s, lua_Number *result) {
 #define MAXBY10		cast(lua_Unsigned, LUA_MAXINTEGER / 10)
 #define MAXLASTD	cast_int(LUA_MAXINTEGER % 10)
 
-static const char *l_str2int (const char *s, lua_Integer *result) {
+LUAI_FASTCODE static const char *l_str2int (const char *s, lua_Integer *result) {
   lua_Unsigned a = 0;
   int empty = 1;
   int neg;
@@ -328,7 +328,7 @@ static const char *l_str2int (const char *s, lua_Integer *result) {
 }
 
 
-size_t luaO_str2num (const char *s, TValue *o) {
+LUAI_FASTCODE size_t luaO_str2num (const char *s, TValue *o) {
   lua_Integer i; lua_Number n;
   const char *e;
   if ((e = l_str2int(s, &i)) != NULL) {  /* try as an integer */
@@ -343,7 +343,7 @@ size_t luaO_str2num (const char *s, TValue *o) {
 }
 
 
-int luaO_utf8esc (char *buff, unsigned long x) {
+LUAI_FASTCODE int luaO_utf8esc (char *buff, unsigned long x) {
   int n = 1;  /* number of bytes put in buffer (backwards) */
   lua_assert(x <= 0x10FFFF);
   if (x < 0x80)  /* ascii? */
@@ -368,7 +368,7 @@ int luaO_utf8esc (char *buff, unsigned long x) {
 /*
 ** Convert a number object to a string
 */
-void luaO_tostring (lua_State *L, StkId obj) {
+LUAI_FASTCODE void luaO_tostring (lua_State *L, StkId obj) {
   char buff[MAXNUMBER2STR];
   size_t len;
   lua_assert(ttisnumber(obj));
@@ -387,7 +387,7 @@ void luaO_tostring (lua_State *L, StkId obj) {
 }
 
 
-static void pushstr (lua_State *L, const char *str, size_t l) {
+LUAI_FASTCODE static void pushstr (lua_State *L, const char *str, size_t l) {
   setsvalue2s(L, L->top, luaS_newlstr(L, str, l));
   luaD_inctop(L);
 }
@@ -397,7 +397,7 @@ static void pushstr (lua_State *L, const char *str, size_t l) {
 ** this function handles only '%d', '%c', '%f', '%p', and '%s'
    conventional formats, plus Lua-specific '%I' and '%U'
 */
-const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {
+LUAI_FASTCODE const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {
   int n = 0;
   for (;;) {
     const char *e = strchr(fmt, '%');
@@ -465,7 +465,7 @@ const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {
 }
 
 
-const char *luaO_pushfstring (lua_State *L, const char *fmt, ...) {
+LUAI_FASTCODE const char *luaO_pushfstring (lua_State *L, const char *fmt, ...) {
   const char *msg;
   va_list argp;
   va_start(argp, fmt);
@@ -484,7 +484,7 @@ const char *luaO_pushfstring (lua_State *L, const char *fmt, ...) {
 
 #define addstr(a,b,l)	( memcpy(a,b,(l) * sizeof(char)), a += (l) )
 
-void luaO_chunkid (char *out, const char *source, size_t bufflen) {
+LUAI_FASTCODE void luaO_chunkid (char *out, const char *source, size_t bufflen) {
   size_t l = strlen(source);
   if (*source == '=') {  /* 'literal' source */
     if (l <= bufflen)  /* small enough? */

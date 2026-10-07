@@ -45,7 +45,7 @@ static const char *const luaT_eventname[] = {  /* ORDER TM */
 };
 
 
-void luaT_init (lua_State *L) {
+LUAI_FASTCODE void luaT_init (lua_State *L) {
   int i;
   for (i=0; i<TM_N; i++) {
     G(L)->tmname[i] = luaS_new(L, luaT_eventname[i]);
@@ -57,7 +57,7 @@ void luaT_init (lua_State *L) {
 #define N_TYPES sizeof(luaT_typenames_)/sizeof(*luaT_typenames_)
 
 /* Access method to expose luaT_fixed strings */
-const char *luaT_getstr (unsigned int i) {
+LUAI_FASTCODE const char *luaT_getstr (unsigned int i) {
   if (i < N_EVENTS)
     return luaT_eventname[i];
   if (i < N_EVENTS + N_TYPES)
@@ -70,7 +70,7 @@ const char *luaT_getstr (unsigned int i) {
 ** function to be used with macro "fasttm": optimized for absence of
 ** tag methods
 */
-const TValue *luaT_gettm (Table *events, TMS event, TString *ename) {
+LUAI_FASTCODE const TValue *luaT_gettm (Table *events, TMS event, TString *ename) {
   const TValue *tm = luaH_getshortstr(events, ename);
   lua_assert(event <= TM_EQ);
   if (ttisnil(tm)) {  /* no tag method? */
@@ -81,7 +81,7 @@ const TValue *luaT_gettm (Table *events, TMS event, TString *ename) {
 }
 
 
-const TValue *luaT_gettmbyobj (lua_State *L, const TValue *o, TMS event) {
+LUAI_FASTCODE const TValue *luaT_gettmbyobj (lua_State *L, const TValue *o, TMS event) {
   Table *mt;
   switch (ttnov(o)) {
     case LUA_TTABLE:
@@ -101,7 +101,7 @@ const TValue *luaT_gettmbyobj (lua_State *L, const TValue *o, TMS event) {
 ** Return the name of the type of an object. For tables and userdata
 ** with metatable, use their '__name' metafield, if present.
 */
-const char *luaT_objtypename (lua_State *L, const TValue *o) {
+LUAI_FASTCODE const char *luaT_objtypename (lua_State *L, const TValue *o) {
   Table *mt;
   if ((ttistable(o) && (mt = hvalue(o)->metatable) != NULL) ||
       (ttisfulluserdata(o) && (mt = uvalue(o)->metatable) != NULL)) {
@@ -113,7 +113,7 @@ const char *luaT_objtypename (lua_State *L, const TValue *o) {
 }
 
 
-void luaT_callTM (lua_State *L, const TValue *f, const TValue *p1,
+LUAI_FASTCODE void luaT_callTM (lua_State *L, const TValue *f, const TValue *p1,
                   const TValue *p2, TValue *p3, int hasres) {
   ptrdiff_t result = savestack(L, p3);
   StkId func = L->top;
@@ -135,7 +135,7 @@ void luaT_callTM (lua_State *L, const TValue *f, const TValue *p1,
 }
 
 
-int luaT_callbinTM (lua_State *L, const TValue *p1, const TValue *p2,
+LUAI_FASTCODE int luaT_callbinTM (lua_State *L, const TValue *p1, const TValue *p2,
                     StkId res, TMS event) {
   const TValue *tm = luaT_gettmbyobj(L, p1, event);  /* try first operand */
   if (ttisnil(tm))
@@ -146,7 +146,7 @@ int luaT_callbinTM (lua_State *L, const TValue *p1, const TValue *p2,
 }
 
 
-void luaT_trybinTM (lua_State *L, const TValue *p1, const TValue *p2,
+LUAI_FASTCODE void luaT_trybinTM (lua_State *L, const TValue *p1, const TValue *p2,
                     StkId res, TMS event) {
   if (!luaT_callbinTM(L, p1, p2, res, event)) {
     switch (event) {
@@ -169,7 +169,7 @@ void luaT_trybinTM (lua_State *L, const TValue *p1, const TValue *p2,
 }
 
 
-int luaT_callorderTM (lua_State *L, const TValue *p1, const TValue *p2,
+LUAI_FASTCODE int luaT_callorderTM (lua_State *L, const TValue *p1, const TValue *p2,
                       TMS event) {
   if (!luaT_callbinTM(L, p1, p2, L->top, event))
     return -1;  /* no metamethod */

@@ -22,6 +22,9 @@
 {
   . = ALIGN(4);
   _siram = .;
+  /* ITCM starts at address 0: keep the first 1 KB free of code, so that a stray write
+     through a null pointer cannot land in it */
+  . = . + 0x400;
   *(.iram)
   . = ALIGN(4);
   _eiram = .;

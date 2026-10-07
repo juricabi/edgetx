@@ -151,6 +151,18 @@
 #define LUAI_DDEF
 
 /*
+@@ LUAI_FASTCODE marks the interpreter's hot functions. With LUA_FAST_CODE_ITCM (radios
+** whose firmware runs from SDRAM and has free ITCM, e.g. the STM32H750 ones) they run from
+** the zero-wait-state ITCM instead of from SDRAM through the instruction cache, which the
+** rest of the firmware keeps evicting.
+*/
+#if defined(LUA_FAST_CODE_ITCM) && defined(__arm__) && !defined(SIMU) && !defined(BOOT)
+#define LUAI_FASTCODE	__attribute__((section(".iram")))
+#else
+#define LUAI_FASTCODE
+#endif
+
+/*
 ** {==================================================================
 ** Compatibility with previous versions
 ** ===================================================================

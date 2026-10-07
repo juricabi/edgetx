@@ -42,6 +42,14 @@ constexpr uint8_t STASHED = 0x33;
 
 enum BitmapFormats { BMP_INVALID = -1, BMP_RGB565 = 0, BMP_ARGB4444 };
 
+// StickTime build: with LUA_FAST_CODE_ITCM the drawing primitives behind the Lua lcd
+// functions run from ITCM, next to the Lua interpreter (see LUAI_FASTCODE in luaconf.h)
+#if defined(LUA_FAST_CODE_ITCM) && defined(__arm__) && !defined(SIMU) && !defined(BOOT)
+#define BMP_FASTCODE __attribute__((section(".iram")))
+#else
+#define BMP_FASTCODE
+#endif
+
 class BitmapBuffer
 {
  public:
