@@ -124,6 +124,9 @@ void luaExecStandalone(const char * filename)
 // singleton instance
 StandaloneLuaWindow* StandaloneLuaWindow::_instance;
 
+// StickTime build: tells the UI task to run its loop faster while a Lua tool is open
+bool standaloneLuaActive() { return StandaloneLuaWindow::instance() != nullptr; }
+
 StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
     Window(MainWindow::instance(), {0, 0, LCD_W, LCD_H}),
     useLvgl(useLvgl), initFunction(initFn), runFunction(runFn)
@@ -274,6 +277,8 @@ void StandaloneLuaWindow::checkEvents()
               UNPROTECT_LUA();
             } else {
               invalidate();
+              // StickTime build: show the frame now, not at the next UI cycle
+              lv_refr_now(nullptr);
             }
           }
         } else if (lua_isstring(lsStandalone, -1)) {
