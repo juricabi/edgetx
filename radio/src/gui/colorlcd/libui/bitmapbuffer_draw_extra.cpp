@@ -265,7 +265,7 @@ static float lb_min(float arr[], int n)
   return m;
 }
 
-bool BitmapBuffer::liangBarskyClipper(coord_t &x1, coord_t &y1, coord_t &x2,
+BMP_FASTCODE bool BitmapBuffer::liangBarskyClipper(coord_t &x1, coord_t &y1, coord_t &x2,
                                       coord_t &y2)
 {
   // defining variables
@@ -335,7 +335,7 @@ bool BitmapBuffer::liangBarskyClipper(coord_t &x1, coord_t &y1, coord_t &x2,
   return true;
 }
 
-void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2,
+BMP_FASTCODE void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2,
                             uint8_t pat, LcdFlags flags)
 {
   // Offsets
@@ -430,7 +430,7 @@ void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coord_t y2,
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 */
-void BitmapBuffer::drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1,
+BMP_FASTCODE void BitmapBuffer::drawFilledTriangle(coord_t x0, coord_t y0, coord_t x1,
                                       coord_t y1, coord_t x2, coord_t y2,
                                       LcdFlags flags, uint8_t opacity)
 {

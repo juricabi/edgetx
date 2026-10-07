@@ -64,7 +64,7 @@ Clear the LCD screen
 
 @status current Introduced in 2.0.0, `color` parameter introduced in 2.2.0 RC12
 */
-static int luaLcdClear(lua_State * L)
+LUAI_FASTCODE static int luaLcdClear(lua_State * L)
 {
   if (luaLcdAllowed && luaLcdBuffer) {
     LcdFlags flags = luaL_optinteger(L, 1, COLOR2FLAGS(COLOR_THEME_SECONDARY3_INDEX));
@@ -107,7 +107,7 @@ bottom line is 63. Drawing on an existing black pixel produces white pixel (TODO
 
 @status current Introduced in 2.0.0
 */
-static int luaLcdDrawPoint(lua_State *L)
+LUAI_FASTCODE static int luaLcdDrawPoint(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
@@ -141,7 +141,7 @@ whole line will not be drawn (starting from OpenTX 2.1.5)
 
 @status current Introduced in 2.0.0, flags introduced in 2.3.6
 */
-static int luaLcdDrawLine(lua_State *L)
+LUAI_FASTCODE static int luaLcdDrawLine(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
@@ -801,7 +801,7 @@ Draw a rectangle from top left corner (x,y) of specified width and height
 
 @status current Introduced in 2.0.0, changed in 2.2.0
 */
-static int luaLcdDrawRectangle(lua_State *L)
+LUAI_FASTCODE static int luaLcdDrawRectangle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer) return 0;
 
@@ -837,7 +837,7 @@ Draw a solid rectangle from top left corner (x,y) of specified width and height
 
 @status current Introduced in 2.0.0
 */
-static int luaLcdDrawFilledRectangle(lua_State *L)
+LUAI_FASTCODE static int luaLcdDrawFilledRectangle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
@@ -1127,7 +1127,7 @@ Draw a filled triangle
 
 @status current Introduced in 2.4.0
 */
-static int luaLcdDrawFilledTriangle(lua_State *L)
+LUAI_FASTCODE static int luaLcdDrawFilledTriangle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;

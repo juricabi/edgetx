@@ -36,7 +36,7 @@
 /*
 ** equality for long strings
 */
-int luaS_eqlngstr (TString *a, TString *b) {
+LUAI_FASTCODE int luaS_eqlngstr (TString *a, TString *b) {
   size_t len = a->u.lnglen;
   lua_assert(gettt(a) == LUA_TLNGSTR && gettt(b) == LUA_TLNGSTR);
   return (a == b) ||  /* same instance or... */
@@ -45,7 +45,7 @@ int luaS_eqlngstr (TString *a, TString *b) {
 }
 
 
-unsigned int luaS_hash (const char *str, size_t l, unsigned int seed) {
+LUAI_FASTCODE unsigned int luaS_hash (const char *str, size_t l, unsigned int seed) {
   unsigned int h = seed ^ cast(unsigned int, l);
   size_t step = (l >> LUAI_HASHLIMIT) + 1;
   for (; l >= step; l -= step)
@@ -54,7 +54,7 @@ unsigned int luaS_hash (const char *str, size_t l, unsigned int seed) {
 }
 
 
-unsigned int luaS_hashlongstr (TString *ts) {
+LUAI_FASTCODE unsigned int luaS_hashlongstr (TString *ts) {
   lua_assert(ts->tt == LUA_TLNGSTR);
   if (getextra(ts) == 0) {  /* no hash? */
     ts->hash = luaS_hash(getstr(ts), ts->u.lnglen, ts->hash);
@@ -67,7 +67,7 @@ unsigned int luaS_hashlongstr (TString *ts) {
 /*
 ** resizes the string table
 */
-void luaS_resize (lua_State *L, int newsize) {
+LUAI_FASTCODE void luaS_resize (lua_State *L, int newsize) {
   int i;
 //***FIX*** rentrancy guard during GC
   stringtable *tb = &G(L)->strt;
@@ -100,7 +100,7 @@ void luaS_resize (lua_State *L, int newsize) {
 /*
 ** Initialize the string table and the key cache
 */
-void luaS_init (lua_State *L) {
+LUAI_FASTCODE void luaS_init (lua_State *L) {
   global_State *g = G(L);
   int i, j;
   luaS_resize(L, MINSTRTABSIZE);  /* initial size of string table */
@@ -121,7 +121,7 @@ void luaS_init (lua_State *L) {
 /*
 ** creates a new string object
 */
-static TString *createstrobj (lua_State *L, size_t l, int tag, unsigned int h) {
+LUAI_FASTCODE static TString *createstrobj (lua_State *L, size_t l, int tag, unsigned int h) {
   TString *ts;
   GCObject *o;
   size_t totalsize;  /* total size of TString object */
@@ -135,14 +135,14 @@ static TString *createstrobj (lua_State *L, size_t l, int tag, unsigned int h) {
 }
 
 
-TString *luaS_createlngstrobj (lua_State *L, size_t l) {
+LUAI_FASTCODE TString *luaS_createlngstrobj (lua_State *L, size_t l) {
   TString *ts = createstrobj(L, l, LUA_TLNGSTR, G(L)->seed);
   ts->u.lnglen = l;
   return ts;
 }
 
 
-void luaS_remove (lua_State *L, TString *ts) {
+LUAI_FASTCODE void luaS_remove (lua_State *L, TString *ts) {
   stringtable *tb = &G(L)->strt;
   TString **p = &tb->hash[lmod(ts->hash, tb->size)];
   while (*p != ts)  /* find previous element */
@@ -155,7 +155,7 @@ void luaS_remove (lua_State *L, TString *ts) {
 /*
 ** checks whether short string exists and reuses it or creates a new one
 */
-static TString *internshrstr (lua_State *L, const char *str, size_t l) {
+LUAI_FASTCODE static TString *internshrstr (lua_State *L, const char *str, size_t l) {
   TString *ts;
   global_State *g = G(L);
   unsigned int h = luaS_hash(str, l, g->seed);
@@ -202,7 +202,7 @@ static TString *internshrstr (lua_State *L, const char *str, size_t l) {
 /*
 ** new string (with explicit length)
 */
-TString *luaS_newlstr (lua_State *L, const char *str, size_t l) {
+LUAI_FASTCODE TString *luaS_newlstr (lua_State *L, const char *str, size_t l) {
   if (l <= LUAI_MAXSHORTLEN)  /* short string? */
     return internshrstr(L, str, l);
   else {
@@ -231,7 +231,7 @@ TString *luaS_newlstr (lua_State *L, const char *str, size_t l) {
 #define IS_STRING_ENTRY(e) (e & 1)
 #define TSTRING(e) cast(TString *, ((size_t) e) & (~1u))
 
-TString *luaS_new (lua_State *L, const char *str) {
+LUAI_FASTCODE TString *luaS_new (lua_State *L, const char *str) {
   unsigned int i = point2uint(str) % KEYCACHE_N;  /* hash */
   int j;
   TString *ps;
@@ -255,7 +255,7 @@ TString *luaS_new (lua_State *L, const char *str) {
 /*
 ** Clear API cache of dirty string entries.
 */
-void luaS_clearcache (global_State *g) {
+LUAI_FASTCODE void luaS_clearcache (global_State *g) {
   int i, j, k;
   TString *ps;
   for (i = 0; i < KEYCACHE_N; i++) {
@@ -273,7 +273,7 @@ void luaS_clearcache (global_State *g) {
   }
 }
 
-Udata *luaS_newudata (lua_State *L, size_t s) {
+LUAI_FASTCODE Udata *luaS_newudata (lua_State *L, size_t s) {
   Udata *u;
   GCObject *o;
   if (s > MAX_SIZE - sizeof(Udata))
