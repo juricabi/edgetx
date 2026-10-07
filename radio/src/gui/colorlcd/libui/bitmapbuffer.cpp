@@ -98,7 +98,7 @@ void BitmapBuffer::setData(uint16_t *d)
   }
 }
 
-void BitmapBuffer::clear(LcdFlags flags)
+BMP_FASTCODE void BitmapBuffer::clear(LcdFlags flags)
 {
   drawSolidFilledRect(0, 0, _width - offsetX, _height - offsetY, flags);
 }
@@ -129,7 +129,7 @@ void BitmapBuffer::getClippingRect(coord_t &xmin, coord_t &xmax, coord_t &ymin,
   ymax = this->ymax;
 }
 
-bool BitmapBuffer::applyClippingRect(coord_t& x, coord_t& y, coord_t& w,
+BMP_FASTCODE bool BitmapBuffer::applyClippingRect(coord_t& x, coord_t& y, coord_t& w,
                                      coord_t& h) const
 {
   if (h < 0) {
@@ -293,7 +293,7 @@ void BitmapBuffer::drawAlphaPixel(pixel_t *p, uint8_t opacity, uint16_t color)
   }
 }
 
-void BitmapBuffer::drawHorizontalLine(coord_t x, coord_t y, coord_t w,
+BMP_FASTCODE void BitmapBuffer::drawHorizontalLine(coord_t x, coord_t y, coord_t w,
                                       uint8_t pat, LcdFlags flags,
                                       uint8_t opacity)
 {
@@ -308,7 +308,7 @@ void BitmapBuffer::drawHorizontalLine(coord_t x, coord_t y, coord_t w,
 }
 
 // x, y, w, h are absolute and already clipped. Writes two pixels per store.
-void BitmapBuffer::fastFill(coord_t x, coord_t y, coord_t w, coord_t h,
+BMP_FASTCODE void BitmapBuffer::fastFill(coord_t x, coord_t y, coord_t w, coord_t h,
                             pixel_t color)
 {
   typedef uint32_t __attribute__((may_alias)) pixel_pair_t;
@@ -329,7 +329,7 @@ void BitmapBuffer::fastFill(coord_t x, coord_t y, coord_t w, coord_t h,
   }
 }
 
-void BitmapBuffer::drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w,
+BMP_FASTCODE void BitmapBuffer::drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w,
                                          uint8_t pat, LcdFlags flags,
                                          uint8_t opacity)
 {
@@ -373,7 +373,7 @@ void BitmapBuffer::drawHorizontalLineAbs(coord_t x, coord_t y, coord_t w,
 #endif
 }
 
-void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h,
+BMP_FASTCODE void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h,
                                     uint8_t pat, LcdFlags flags,
                                     uint8_t opacity)
 {
@@ -422,7 +422,7 @@ void BitmapBuffer::drawVerticalLine(coord_t x, coord_t y, coord_t h,
 #endif
 }
 
-void BitmapBuffer::drawRect(coord_t x, coord_t y, coord_t w, coord_t h,
+BMP_FASTCODE void BitmapBuffer::drawRect(coord_t x, coord_t y, coord_t w, coord_t h,
                             uint8_t thickness, uint8_t pat, LcdFlags flags,
                             uint8_t opacity)
 {
@@ -432,19 +432,19 @@ void BitmapBuffer::drawRect(coord_t x, coord_t y, coord_t w, coord_t h,
   drawFilledRect(x, y + h - thickness, w, thickness, pat, flags, opacity);
 }
 
-void BitmapBuffer::drawSolidRect(coord_t x, coord_t y, coord_t w, coord_t h,
+BMP_FASTCODE void BitmapBuffer::drawSolidRect(coord_t x, coord_t y, coord_t w, coord_t h,
                                  uint8_t thickness, LcdFlags flags)
 {
   drawRect(x, y, w, h, thickness, SOLID, flags, 0);
 }
 
-void BitmapBuffer::drawSolidFilledRect(coord_t x, coord_t y, coord_t w,
+BMP_FASTCODE void BitmapBuffer::drawSolidFilledRect(coord_t x, coord_t y, coord_t w,
                                        coord_t h, LcdFlags flags)
 {
   drawFilledRect(x, y, w, h, SOLID, flags, 0);
 }
 
-void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h,
+BMP_FASTCODE void BitmapBuffer::drawFilledRect(coord_t x, coord_t y, coord_t w, coord_t h,
                                   uint8_t pat, LcdFlags flags, uint8_t opacity)
 {
   if (opacity == OPACITY_MAX) return;
