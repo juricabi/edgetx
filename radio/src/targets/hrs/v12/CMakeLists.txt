@@ -71,10 +71,6 @@ add_definitions(
 
 set(SDRAM ON)
 
-# StickTime build: the firmware runs from SDRAM and leaves the 64 KB ITCM empty, so the
-# Lua interpreter's hot code goes there (see lua/CMakeLists.txt)
-set(LUA_FAST_CODE_ITCM ON)
-
 # UART4 on the internal 3-pin header (no switchable power rail)
 set(AUX_SERIAL YES)
 
