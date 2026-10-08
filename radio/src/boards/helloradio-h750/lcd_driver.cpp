@@ -33,8 +33,7 @@
 
 #if !defined(BOOT) && !defined(LCD_SYNC_TRANSFER)
 // StickTime build: frames go to the display in the background. The flush only queues the
-// frame; the FMARK (tearing effect) interrupt starts it at a vertical blank (the next one at
-// least LCD_MIN_FRAME_US after the previous frame, so frame times stay even) and the
+// frame; the FMARK (tearing effect) interrupt starts it at the next vertical blank and the
 // SPI end-of-transfer interrupt chains the DMA chunks and reports the frame done. The CPU
 // meanwhile runs the next frame (a Lua tool's run(), for example) instead of waiting for
 // the blank (up to a whole display refresh) and then for 150 KB of SPI (13 ms).
@@ -129,26 +128,12 @@ static void memory_write(const uint16_t* data, uint32_t length)
 #define LCD_XFER_CHUNK        (LCD_W * LCD_H / 2) // words per DMA transfer (counters are 16 bit)
 #define LCD_VSYNC_TIMEOUT_US  40000               // no FMARK: send without it
 #define LCD_XFER_TIMEOUT_US   100000              // a frame takes 13 ms: give up on it
-// Even frame pacing: a frame starts at a vertical blank at least this long after the previous
-// one started. The display refreshes about every 13 ms and a frame needs about 13 ms on the
-// SPI, plus the time LVGL takes to draw it: a frame that is ready quickly sometimes catches
-// the very next blank and sometimes the one after, and such a mix of 13 ms and 26 ms frames
-// looks less smooth than steady 26 ms ones. With this minimum every frame waits for the
-// second blank (a steady 38 fps on the V12) unless it takes longer than that anyway.
-#define LCD_MIN_FRAME_US      20000
 
 enum { LCD_IDLE, LCD_WAIT_VSYNC, LCD_SENDING };
 static volatile uint8_t lcdState = LCD_IDLE;
 static const uint16_t* lcdXferData;
 static uint32_t lcdXferLeft;
 static volatile uint32_t lcdStateSince;
-static volatile uint32_t lcdFrameStartUs;         // when the last frame started
-
-// may the waiting frame start (at a vertical blank)?
-static inline bool lcdFrameDue()
-{
-  return timersGetUsTick() - lcdFrameStartUs >= LCD_MIN_FRAME_US;
-}
 
 // (written for the V12's stream: LCD_SPI_TX_DMA_STREAM is DMA1 stream 4, LCD_SPI is SPI1)
 static_assert(LCD_SPI_TX_DMA_STREAM == LL_DMA_STREAM_4, "LCD TX DMA is not stream 4");
@@ -186,7 +171,6 @@ static void lcdStartFrame()
 {
   lcdState = LCD_SENDING;
   lcdStateSince = timersGetUsTick();
-  lcdFrameStartUs = lcdStateSince;
 
   stm32_spi_select(&lcdSpi);
   LCD_COMMAND_MODE();
@@ -245,13 +229,8 @@ extern "C" void EXTI15_10_IRQHandler(void)
 {
   if (LL_EXTI_IsActiveFlag_0_31(LCD_FMARK_EXTI_LINE)) {
     LL_EXTI_ClearFlag_0_31(LCD_FMARK_EXTI_LINE);
-    if (lcdState != LCD_WAIT_VSYNC) {
-      LL_EXTI_DisableIT_0_31(LCD_FMARK_EXTI_LINE);
-    } else if (lcdFrameDue()) {
-      LL_EXTI_DisableIT_0_31(LCD_FMARK_EXTI_LINE);
-      lcdStartFrame();
-    }
-    // else too soon after the last frame: the interrupt stays on for the next blank
+    LL_EXTI_DisableIT_0_31(LCD_FMARK_EXTI_LINE);
+    if (lcdState == LCD_WAIT_VSYNC) lcdStartFrame();
   }
 }
 
@@ -264,7 +243,7 @@ static void lcdService()
   __disable_irq();
   uint32_t age = timersGetUsTick() - lcdStateSince;
   if (lcdState == LCD_WAIT_VSYNC) {
-    if ((gpio_read(LCD_FMARK) && lcdFrameDue()) || age > LCD_VSYNC_TIMEOUT_US) {
+    if (gpio_read(LCD_FMARK) || age > LCD_VSYNC_TIMEOUT_US) {
       LL_EXTI_DisableIT_0_31(LCD_FMARK_EXTI_LINE);
       LL_EXTI_ClearFlag_0_31(LCD_FMARK_EXTI_LINE);
       lcdStartFrame();
@@ -306,15 +285,14 @@ static void startLcdRefresh(lv_disp_drv_t *disp_drv, uint16_t *buffer,
   lcdXferData = buffer;
   lcdXferLeft = length;
 
-  // send at the next vertical blank (FMARK high), like the original busy wait did, but not
-  // sooner than LCD_MIN_FRAME_US after the previous frame
+  // send at the next vertical blank (FMARK high), like the original busy wait did
   uint32_t primask = __get_PRIMASK();
   __disable_irq();
   lcdState = LCD_WAIT_VSYNC;
   lcdStateSince = timersGetUsTick();
   LL_EXTI_ClearFlag_0_31(LCD_FMARK_EXTI_LINE);
   LL_EXTI_EnableIT_0_31(LCD_FMARK_EXTI_LINE);
-  if (gpio_read(LCD_FMARK) && lcdFrameDue()) {
+  if (gpio_read(LCD_FMARK)) {
     // already in the blank
     LL_EXTI_DisableIT_0_31(LCD_FMARK_EXTI_LINE);
     LL_EXTI_ClearFlag_0_31(LCD_FMARK_EXTI_LINE);
