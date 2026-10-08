@@ -125,11 +125,11 @@ jobs:
             - STM32H750 radios (targets tx16smk3, tx15, gx15, t15pro, t15h7, t22, pa01, st16,
               c14, h17, v12, v15): the Lua interpreter and the drawing code behind it run from
               ITCM instead of from SDRAM through the instruction cache
-            - HelloRadioSky V12: frames go to the display in the background (started at the
-              display's vertical blank)
+            - HelloRadioSky V12 and Flysky PA01 (SPI screens): frames go to the display in the
+              background (started at the display's vertical blank); the PA01 is untested so far
 
-            With no tool open the radio runs like stock `main` (the V12's background display
-            transfer is always on). SYS > Version shows `-fastlua`.
+            With no tool open the radio runs like stock `main` (the V12's and PA01's background
+            display transfer is always on). SYS > Version shows `-fastlua`.
 
             **Commit:** ${{ github.sha }}
             **Built:** ${{ env.build_date }}
