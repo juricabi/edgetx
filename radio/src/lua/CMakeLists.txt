@@ -72,9 +72,13 @@ foreach(FILE ${LUA_SRC})
   set(SRC ${SRC} ${LUA_DIR}/${FILE})
 endforeach()
 
-# StickTime build: on targets that set LUA_FAST_CODE_ITCM (firmware in SDRAM, ITCM free),
-# the functions marked LUAI_FASTCODE run from ITCM, and the files that hold the
-# interpreter's hot paths are compiled for speed instead of size.
+# StickTime build: the STM32H750 radios (every target linked with stm32h750_sdram) run their
+# firmware from SDRAM and leave the 64 KB ITCM empty. With LUA_FAST_CODE_ITCM the functions
+# marked LUAI_FASTCODE run from ITCM instead, and the files that hold the interpreter's hot
+# paths are compiled for speed instead of size.
+if(TARGET_LINKER_DIR STREQUAL "stm32h750_sdram")
+  set(LUA_FAST_CODE_ITCM ON)
+endif()
 if(LUA_FAST_CODE_ITCM)
   add_definitions(-DLUA_FAST_CODE_ITCM)
   foreach(FILE lapi.c ldo.c lfunc.c lgc.c lmem.c lobject.c lstate.c lstring.c ltable.c ltm.c
