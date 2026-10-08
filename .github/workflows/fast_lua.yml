@@ -109,6 +109,10 @@ jobs:
           body: |
             ## Fast Lua tools: color radio firmware
 
+            Made for [StickTime](https://github.com/juricabi/sticktime), the FPV sim that runs
+            on your radio, but every Lua tool gets faster. In the zip, flash the file named after
+            your radio the usual way (bootloader or EdgeTX Buddy).
+
             EdgeTX `main` plus faster Lua tools (SYS > Tools), from branch `fast-lua-20ms`:
 
             - while a Lua tool is open, the UI loop runs every 20 ms instead of 50 ms and each
