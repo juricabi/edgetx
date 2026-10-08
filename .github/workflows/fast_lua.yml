@@ -116,7 +116,9 @@ jobs:
             - the tool gets `TOOL_RUN_US` and `TOOL_SHOW_US`: how long its last run() and
               putting that frame on the screen took
             - HelloRadioSky V12: the Lua interpreter runs from ITCM instead of SDRAM, and frames
-              go to the display in the background (started at the display's vertical blank)
+              go to the display in the background (started at the display's vertical blank),
+              at most every second refresh, so frame times stay even (a steady 38 fps instead
+              of a mix of one-refresh and two-refresh frames)
 
             With no tool open the radio runs like stock `main` (the V12's background display
             transfer is always on). SYS > Version shows `-fastlua`.
