@@ -94,45 +94,52 @@ jobs:
           echo "release_filename=$name" >> "$GITHUB_ENV"
           echo "build_date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_ENV"
 
-      - name: Delete the previous build
-        run: gh release delete fast-lua-20ms --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
+      - name: Deploy prerelease
+        # In place, so that the release and its link never go away: the new zip goes up before
+        # the old one is removed, and a failed step leaves the last build where it was.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          cat > notes.md <<'EOF'
+          ## Fast Lua tools: color radio firmware
 
-      - name: Deploy prerelease
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: fast-lua-20ms
-          target_commitish: ${{ github.sha }}
-          prerelease: true
-          name: "Fast Lua tools (20 ms)"
-          body: |
-            ## Fast Lua tools: color radio firmware
+          Made for [StickTime](https://github.com/juricabi/sticktime), the FPV sim that runs
+          on your radio, but every Lua tool gets faster. In the zip, flash the file named after
+          your radio the usual way (bootloader or EdgeTX Buddy).
 
-            Made for [StickTime](https://github.com/juricabi/sticktime), the FPV sim that runs
-            on your radio, but every Lua tool gets faster. In the zip, flash the file named after
-            your radio the usual way (bootloader or EdgeTX Buddy).
+          EdgeTX `main` plus faster Lua tools (SYS > Tools), from branch `fast-lua-20ms`:
 
-            EdgeTX `main` plus faster Lua tools (SYS > Tools), from branch `fast-lua-20ms`:
+          - while a Lua tool is open, the UI loop runs every 20 ms instead of 50 ms and each
+            frame goes to the screen as soon as the tool has drawn it
+          - the tool's solid lines, rectangles and filled triangles go straight into its
+            canvas instead of through one LVGL canvas call each, and the H7 radios no longer
+            flush the whole data cache on every lcd.drawLine
+          - the tool gets `TOOL_RUN_US` and `TOOL_SHOW_US`: how long its last run() and
+            putting that frame on the screen took
+          - STM32H750 radios (targets tx16smk3, tx15, gx15, t15pro, t15h7, t22, pa01, st16,
+            c14, h17, v12, v15): the Lua interpreter and the drawing code behind it run from
+            ITCM instead of from SDRAM through the instruction cache
+          - HelloRadioSky V12 and Flysky PA01 (SPI screens): frames go to the display in the
+            background (started at the display's vertical blank); the PA01 is untested so far
 
-            - while a Lua tool is open, the UI loop runs every 20 ms instead of 50 ms and each
-              frame goes to the screen as soon as the tool has drawn it
-            - the tool's solid lines, rectangles and filled triangles go straight into its
-              canvas instead of through one LVGL canvas call each, and the H7 radios no longer
-              flush the whole data cache on every lcd.drawLine
-            - the tool gets `TOOL_RUN_US` and `TOOL_SHOW_US`: how long its last run() and
-              putting that frame on the screen took
-            - STM32H750 radios (targets tx16smk3, tx15, gx15, t15pro, t15h7, t22, pa01, st16,
-              c14, h17, v12, v15): the Lua interpreter and the drawing code behind it run from
-              ITCM instead of from SDRAM through the instruction cache
-            - HelloRadioSky V12 and Flysky PA01 (SPI screens): frames go to the display in the
-              background (started at the display's vertical blank); the PA01 is untested so far
-
-            With no tool open the radio runs like stock `main` (the V12's and PA01's background
-            display transfer is always on). SYS > Version shows `-fastlua`.
-
-            **Commit:** ${{ github.sha }}
-            **Built:** ${{ env.build_date }}
-
-            These are test builds of a development branch: back up your SD card first.
-          files: ${{ env.release_filename }}
+          With no tool open the radio runs like stock `main` (the V12's and PA01's background
+          display transfer is always on). SYS > Version shows `-fastlua`.
+          EOF
+          printf '\n**Commit:** %s\n**Built:** %s\n\nThese are test builds of a development branch: back up your SD card first.\n' \
+            "$GITHUB_SHA" "$build_date" >> notes.md
+          if gh release view fast-lua-20ms --repo "$REPO" > /dev/null 2>&1; then
+            gh release upload fast-lua-20ms "$release_filename" --clobber --repo "$REPO"
+            for a in $(gh release view fast-lua-20ms --repo "$REPO" --json assets --jq '.assets[].name'); do
+              if [ "$a" != "$release_filename" ]; then
+                gh release delete-asset fast-lua-20ms "$a" --yes --repo "$REPO"
+              fi
+            done
+            # the tag follows the branch, so the release's source code is this build's
+            gh api -X PATCH "repos/$REPO/git/refs/tags/fast-lua-20ms" -f sha="$GITHUB_SHA" -F force=true > /dev/null
+            gh release edit fast-lua-20ms --prerelease --title "Fast Lua tools (20 ms)" \
+              --notes-file notes.md --repo "$REPO"
+          else
+            gh release create fast-lua-20ms "$release_filename" --target "$GITHUB_SHA" --prerelease \
+              --title "Fast Lua tools (20 ms)" --notes-file notes.md --repo "$REPO"
+          fi
