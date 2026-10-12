@@ -313,6 +313,16 @@ BMP_FASTCODE void BitmapBuffer::fastFill(coord_t x, coord_t y, coord_t w, coord_
 {
   typedef uint32_t __attribute__((may_alias)) pixel_pair_t;
   if (w <= 0 || h <= 0 || !data) return;
+#if !defined(SIMU) && !defined(BOOT)
+  // large fills (lcd.clear(), a sky): DMA2D writes them straight to memory, the CPU's stores
+  // read every line into the data cache first on H7 radios (and the frames are in SDRAM)
+  if (w * h >= FAST_FILL_DMA_PIXELS && x >= 0 && y >= 0 && x + w <= _width &&
+      y + h <= _height) {
+    DMAFillRect(data, _width, _height, x, y, w, h, color);
+    DMAWaitAndSyncCache();
+    return;
+  }
+#endif
   DMAWaitAndSyncCache();
   const pixel_pair_t pair = color | ((uint32_t)color << 16);
   for (coord_t j = 0; j < h; j++) {

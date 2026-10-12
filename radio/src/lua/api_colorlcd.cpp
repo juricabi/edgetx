@@ -32,10 +32,32 @@
 #include "lua_widget.h"
 #include "api_colorlcd.h"
 #include "lib_file.h"
+#if !defined(SIMU)
+#include "dma2d.h"
+#endif
 
 #define BITMAP_METATABLE "BITMAP*"
 
 BitmapBuffer* luaLcdBuffer  = nullptr;
+
+uint16_t* luaLcdKeepFrame = nullptr;
+bool luaLcdDrawn = true;
+
+void luaLcdFirstDraw(bool clears)
+{
+  luaLcdDrawn = true;
+  uint16_t* keep = luaLcdKeepFrame;
+  luaLcdKeepFrame = nullptr;
+  if (!keep || clears || !luaLcdBuffer) return;
+  uint16_t* data = luaLcdBuffer->getData();
+  if (data == keep) return;
+#if !defined(SIMU)
+  DMACopyBitmap(data, LCD_W, LCD_H, 0, 0, keep, LCD_W, LCD_H, 0, 0, LCD_W, LCD_H);
+  DMAWaitAndSyncCache();
+#else
+  memcpy(data, keep, luaLcdBuffer->getDataSize());
+#endif
+}
 
 /*luadoc
 @function lcd.refresh()
@@ -67,6 +89,7 @@ Clear the LCD screen
 LUAI_FASTCODE static int luaLcdClear(lua_State * L)
 {
   if (luaLcdAllowed && luaLcdBuffer) {
+    luaLcdTouch(true);      // the whole frame is drawn again: no need for the last one
     LcdFlags flags = luaL_optinteger(L, 1, COLOR2FLAGS(COLOR_THEME_SECONDARY3_INDEX));
     flags = colorToRGB(flags);
     luaLcdBuffer->clear(flags);
@@ -111,6 +134,7 @@ LUAI_FASTCODE static int luaLcdDrawPoint(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
@@ -145,6 +169,7 @@ LUAI_FASTCODE static int luaLcdDrawLine(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   coord_t x1 = luaL_checkinteger(L, 1);
   coord_t y1 = luaL_checkinteger(L, 2);
@@ -292,6 +317,7 @@ static int luaLcdDrawTextLines(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
@@ -406,6 +432,7 @@ static int luaLcdDrawChannel(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
@@ -447,6 +474,7 @@ static int luaLcdDrawSwitch(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
@@ -475,6 +503,7 @@ static int luaLcdDrawSource(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
@@ -691,6 +720,7 @@ static int luaLcdDrawBitmap(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   const BitmapBuffer * b = checkBitmap(L, 1);
 
@@ -729,6 +759,7 @@ static int luaLcdDrawBitmapPattern(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   const char* m = luaL_checkstring(L, 1);
 
@@ -766,6 +797,7 @@ static int luaLcdDrawBitmapPatternPie(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   const char* m = luaL_checkstring(L, 1);
 
@@ -804,6 +836,7 @@ Draw a rectangle from top left corner (x,y) of specified width and height
 LUAI_FASTCODE static int luaLcdDrawRectangle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer) return 0;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
@@ -841,6 +874,7 @@ LUAI_FASTCODE static int luaLcdDrawFilledRectangle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
@@ -878,6 +912,7 @@ static int luaLcdInvertRect(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
@@ -915,6 +950,7 @@ static int luaLcdDrawGauge(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
@@ -1037,6 +1073,7 @@ static int luaLcdDrawCircle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   coord_t x = luaL_checkinteger(L, 1);
   coord_t y = luaL_checkinteger(L, 2);
@@ -1068,6 +1105,7 @@ static int luaLcdDrawFilledCircle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   coord_t x = luaL_checkinteger(L, 1);
   coord_t y = luaL_checkinteger(L, 2);
@@ -1097,6 +1135,7 @@ static int luaLcdDrawTriangle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   coord_t x1 = luaL_checkinteger(L, 1);
   coord_t y1 = luaL_checkinteger(L, 2);
@@ -1131,6 +1170,7 @@ LUAI_FASTCODE static int luaLcdDrawFilledTriangle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   coord_t x1 = luaL_checkinteger(L, 1);
   coord_t y1 = luaL_checkinteger(L, 2);
@@ -1167,6 +1207,7 @@ static int luaLcdDrawArc(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   coord_t x = luaL_checkinteger(L, 1);
   coord_t y = luaL_checkinteger(L, 2);
@@ -1203,6 +1244,7 @@ static int luaLcdDrawPie(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   coord_t x = luaL_checkinteger(L, 1);
   coord_t y = luaL_checkinteger(L, 2);
@@ -1239,6 +1281,7 @@ static int luaLcdDrawAnnulus(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   coord_t x = luaL_checkinteger(L, 1);
   coord_t y = luaL_checkinteger(L, 2);
@@ -1275,6 +1318,7 @@ static int luaLcdDrawLineWithClipping(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   coord_t x1 = luaL_checkinteger(L, 1);
   coord_t y1 = luaL_checkinteger(L, 2);
@@ -1385,6 +1429,7 @@ static int luaLcdDrawHudRectangle(lua_State *L)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return 0;
+  luaLcdTouch();
 
   float pitch = luaL_checknumber(L, 1);
   float roll = luaL_checknumber(L, 2);

@@ -22,6 +22,7 @@
 #include "standalone_lua.h"
 
 #include "dma2d.h"
+#include "lcd.h"
 #include "timers_driver.h"
 #include "keys.h"
 #include "lua/lua_event.h"
@@ -129,9 +130,76 @@ StandaloneLuaWindow* StandaloneLuaWindow::_instance;
 bool standaloneLuaActive() { return StandaloneLuaWindow::instance() != nullptr; }
 
 // StickTime build: how long the tool's last run() took, and how long putting that frame on
-// the screen took (waiting for the display, then LVGL drawing it), in microseconds. The
-// tool reads them as the globals TOOL_RUN_US and TOOL_SHOW_US.
+// the screen took (waiting for the display, then LVGL drawing it, or handing the frame to the
+// display), in microseconds. The tool reads them as the globals TOOL_RUN_US and TOOL_SHOW_US.
 static uint32_t toolRunUs = 0, toolShowUs = 0;
+
+// a whole frame, rounded up to 64 bytes (the frames start on 64 byte boundaries)
+static constexpr size_t FRAME_STRIDE =
+    ((size_t)LCD_W * LCD_H * sizeof(uint16_t) + 63) & ~(size_t)63;
+
+void StandaloneLuaWindow::frameStart()
+{
+  // the tool draws into a frame that is neither on the display nor on its way there
+  uint16_t* f = frames[frameNext];
+  lcdBuffer->setData(f);
+  if (frameCanvas) lv_canvas_set_buffer(frameCanvas, f, LCD_W, LCD_H, LV_IMG_CF_TRUE_COLOR);
+  luaLcdKeepFrame = frameShown;
+  luaLcdDrawn = false;
+}
+
+void StandaloneLuaWindow::endDirectFrames()
+{
+  if (!framesDirect) return;
+  framesDirect = false;
+  lv_disp_enable_invalidation(lv_disp_get_default(), true);
+  // LVGL's frame buffers hold an old picture: the whole screen is drawn again
+  lv_obj_invalidate(lv_scr_act());
+  lv_obj_invalidate(lv_layer_top());
+}
+
+void StandaloneLuaWindow::frameShow()
+{
+  bool drawn = luaLcdDrawn;
+  luaLcdKeepFrame = nullptr;
+  luaLcdDrawn = true;
+
+  // straight to the display, unless EdgeTX shows something over the tool (a dialog, a bubble)
+  bool direct = !hasError && Window::topWindow() == this &&
+                lv_obj_get_child_cnt(lv_layer_top()) == 0;
+
+  if (!drawn) {
+    // nothing drawn: the last frame stays (this one holds an older picture)
+    if (direct && framesDirect) return;
+    endDirectFrames();
+    lcdBuffer->setData(frameShown);
+    if (frameCanvas)
+      lv_canvas_set_buffer(frameCanvas, frameShown, LCD_W, LCD_H, LV_IMG_CF_TRUE_COLOR);
+    invalidate();
+    lv_refr_now(nullptr);
+    return;
+  }
+
+  uint16_t* f = frames[frameNext];
+  if (direct) {
+    if (!framesDirect) {
+      // LVGL leaves the screen alone while the tool's frames are on it: nothing it has to
+      // draw again (LVGL's refresh only draws what was invalidated, and any invalidation
+      // would also restart it; the canvas is invalidated by every text the tool draws)
+      lv_disp_t* disp = lv_disp_get_default();
+      _lv_inv_area(disp, nullptr);
+      lv_disp_enable_invalidation(disp, false);
+      framesDirect = true;
+    }
+    lcdDirectFrameShow(f);
+  } else {
+    endDirectFrames();
+    invalidate();
+    lv_refr_now(nullptr);
+  }
+  frameShown = f;
+  frameNext = (frameNext + 1) % 3;
+}
 
 StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
     Window(MainWindow::instance(), {0, 0, LCD_W, LCD_H}),
@@ -160,8 +228,18 @@ StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
     lv_obj_set_style_pad_top(lbl, (LCD_H - EdgeTxStyles::STD_FONT_HEIGHT) / 2, LV_PART_MAIN);
     lv_label_set_text(lbl, STR_LOADING);
   } else {
-    lcdBuffer = new BitmapBuffer(BMP_RGB565, LCD_W, LCD_H);
-    lcdBuffer->addCanvas(this);
+    if (lcdDirectFramesSupported()) {
+      framesMem = malloc(3 * FRAME_STRIDE + 64);
+      if (framesMem) {
+        auto p = (uint8_t*)(((uintptr_t)framesMem + 63) & ~(uintptr_t)63);
+        for (int i = 0; i < 3; i++) frames[i] = (uint16_t*)(p + i * FRAME_STRIDE);
+        frameShown = frames[0];
+        frameNext = 1;
+      }
+    }
+    lcdBuffer = framesMem ? new BitmapBuffer(BMP_RGB565, LCD_W, LCD_H, frames[0])
+                          : new BitmapBuffer(BMP_RGB565, LCD_W, LCD_H);
+    frameCanvas = lcdBuffer->addCanvas(this);
     lcdBuffer->setFastDraw(true);
 
     lcdBuffer->clear();
@@ -190,6 +268,16 @@ StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
     // In case keyboard was open when window closed
     Keyboard::hideKeyboard();
 
+    if (framesMem) {
+      // the display back on LVGL's frame buffers before the tool's frames go
+      endDirectFrames();
+      if (frameCanvas) lv_obj_add_flag(frameCanvas, LV_OBJ_FLAG_HIDDEN);
+      lv_refr_now(nullptr);
+      lcdDirectFrameWait();
+      luaLcdKeepFrame = nullptr;
+      luaLcdDrawn = true;
+    }
+
     luaL_unref(lsStandalone, LUA_REGISTRYINDEX, initFunction);
     luaL_unref(lsStandalone, LUA_REGISTRYINDEX, runFunction);
     luaLcdBuffer = nullptr;
@@ -198,6 +286,8 @@ StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
 
     if (lcdBuffer) delete lcdBuffer;
     lcdBuffer = nullptr;
+    if (framesMem) free(framesMem);
+    framesMem = nullptr;
 
     luaScriptManager = nullptr;
 
@@ -257,6 +347,7 @@ void StandaloneLuaWindow::checkEvents()
       lua_pushinteger(lsStandalone, toolShowUs);
       lua_setglobal(lsStandalone, "TOOL_SHOW_US");
       uint32_t t0 = timersGetUsTick();
+      if (framesMem && !useLvglLayout()) frameStart();
       lua_rawgeti(lsStandalone, LUA_REGISTRYINDEX, runFunction);
 
       lua_pushunsigned(lsStandalone, evt.event);
@@ -288,10 +379,14 @@ void StandaloneLuaWindow::checkEvents()
               }
               UNPROTECT_LUA();
             } else {
-              invalidate();
               // StickTime build: show the frame now, not at the next UI cycle
               uint32_t t1 = timersGetUsTick();
-              lv_refr_now(nullptr);
+              if (framesMem) {
+                frameShow();
+              } else {
+                invalidate();
+                lv_refr_now(nullptr);
+              }
               toolRunUs = t1 - t0;
               toolShowUs = timersGetUsTick() - t1;
             }
@@ -347,6 +442,9 @@ bool StandaloneLuaWindow::displayPopup(event_t event, uint8_t type,
 {
   if (useLvgl) return true;
 
+  // over the last frame (see luaLcdKeepFrame)
+  luaLcdTouch();
+
   // transparent background
   lcdBuffer->drawFilledRect(0, 0, LCD_W, LCD_H, SOLID, COLOR_THEME_PRIMARY1,
                             OPACITY(5));
@@ -384,6 +482,15 @@ void StandaloneLuaWindow::showError(bool firstCall, const char* title, const cha
 {
   runFunction = LUA_REFNIL;
   hasError = true;
+  if (framesMem) {
+    // LVGL shows the error, over the last finished frame
+    endDirectFrames();
+    luaLcdKeepFrame = nullptr;
+    luaLcdDrawn = true;
+    lcdBuffer->setData(frameShown);
+    if (frameCanvas)
+      lv_canvas_set_buffer(frameCanvas, frameShown, LCD_W, LCD_H, LV_IMG_CF_TRUE_COLOR);
+  }
   if (!errorModal) {
     lv_obj_set_scroll_dir(lvobj, LV_DIR_NONE);
     errorModal = lv_obj_create(lvobj);
