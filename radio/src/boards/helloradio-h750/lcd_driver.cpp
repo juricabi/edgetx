@@ -141,6 +141,7 @@ static volatile uint32_t dgQueued, dgSendT0, dgTeLast;
 static volatile uint32_t dgFrames, dgSendSum, dgWaitSum, dgTeSum, dgTeN;
 static volatile uint32_t dgIrq, dgPoll, dgNow, dgAbort;
 static volatile bool dgNoTe = false;
+static volatile bool dgFast = true;
 static uint8_t dgE8a = 0x12, dgE8b = 0x00;  // as lcdInit() sets them
 
 // (written for the V12's stream: LCD_SPI_TX_DMA_STREAM is DMA1 stream 4, LCD_SPI is SPI1)
@@ -161,6 +162,19 @@ static void lcdChunkStart()
 {
   uint32_t n = lcdXferLeft > LCD_XFER_CHUNK ? LCD_XFER_CHUNK : lcdXferLeft;
   lcdDmaClearFlags();
+  // Read one pixel at a time, the DMA waits for SDRAM on every pixel (a frame at 86 Mbit/s,
+  // 14.5 ms: longer than the panel's refresh). Two pixels at a time through the DMA's FIFO keep
+  // the SPI busy at its full 96 MHz. Word reads need a word aligned buffer and an even count
+  // (DMA_SxNDTR counts the SPI's half-words).
+  if (dgFast && ((uintptr_t)lcdXferData & 3) == 0 && (n & 1) == 0) {
+    LL_DMA_EnableFifoMode(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM);
+    LL_DMA_SetFIFOThreshold(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, LL_DMA_FIFOTHRESHOLD_FULL);
+    LL_DMA_SetMemoryBurstxfer(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, LL_DMA_MBURST_SINGLE);
+    LL_DMA_SetMemorySize(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, LL_DMA_MDATAALIGN_WORD);
+  } else {
+    LL_DMA_DisableFifoMode(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM);
+    LL_DMA_SetMemorySize(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, LL_DMA_MDATAALIGN_HALFWORD);
+  }
   LL_DMA_SetMemoryAddress(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, (uintptr_t)lcdXferData);
   LL_DMA_SetDataLength(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, n);
   LL_DMA_EnableStream(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM);
@@ -263,7 +277,10 @@ static void lcdService()
 {
   uint32_t primask = __get_PRIMASK();
   __disable_irq();
-  uint32_t age = timersGetUsTick() - lcdStateSince;
+  // with interrupts off timersGetUsTick() can be up to 1 ms behind (its millisecond interrupt
+  // waits): a frame that started less than 1 ms ago would look 71 minutes old, and be dropped
+  int32_t age = (int32_t)(timersGetUsTick() - lcdStateSince);
+  if (age < 0) age = 0;
   if (lcdState == LCD_WAIT_VSYNC) {
     if (dgNoTe || gpio_read(LCD_FMARK) || age > LCD_VSYNC_TIMEOUT_US) {
       dgPoll++;
@@ -674,7 +691,7 @@ extern "C" void lcdInit()
 //  6 started by polling 7 started at once           8 transfers given up
 //  9 SPI clock (Hz, from the clock setup)           10 CPU clock (Hz)
 //  11 not waiting for the panel (1)                 12 register E8h (first byte * 256 + second)
-//  13 the window's length (us)
+//  13 the window's length (us)                   14 the DMA reads two pixels at a time (1)
 int lcdDiagRead(uint32_t* v)
 {
   static uint32_t pub[LCD_DIAG_VALUES];
@@ -705,13 +722,15 @@ int lcdDiagRead(uint32_t* v)
   pub[10] = clocks.SYSCLK_Frequency;
   pub[11] = dgNoTe ? 1 : 0;
   pub[12] = (uint32_t)dgE8a << 8 | dgE8b;
+  pub[14] = dgFast ? 1 : 0;
   for (int i = 0; i < LCD_DIAG_VALUES; i++) v[i] = pub[i];
   return LCD_DIAG_VALUES;
 }
 
-void lcdDiagSet(bool noTe, int e8a, int e8b)
+void lcdDiagSet(bool noTe, int e8a, int e8b, int fast)
 {
   dgNoTe = noTe;
+  if (fast >= 0) dgFast = fast != 0;  // from the next chunk on
   if (e8a < 0 || e8a > 255 || e8b < 0 || e8b > 255) return;
   if (e8a == dgE8a && e8b == dgE8b) return;
   // between frames: the last one out first
