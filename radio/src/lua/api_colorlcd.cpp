@@ -202,6 +202,7 @@ static void drawString(lua_State *L, const char * s, LcdFlags flags)
 {
   if (!luaLcdAllowed || !luaLcdBuffer)
     return;
+  luaLcdTouch();
 
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);

@@ -23,6 +23,7 @@
 
 #include "dma2d.h"
 #include "lcd.h"
+#include "edgetx.h"
 #include "timers_driver.h"
 #include "keys.h"
 #include "lua/lua_event.h"
@@ -164,6 +165,11 @@ bool StandaloneLuaWindow::othersOnTop()
 {
   if (hasError || Window::topWindow() != this || !lvobj) return true;
   if (lv_obj_get_child_cnt(lv_layer_top()) > 0) return true;
+  // LVGL objects the tool made on its own window (lvgl.* without useLvgl), next to the canvas
+  for (uint32_t i = 0, n = lv_obj_get_child_cnt(lvobj); i < n; i++) {
+    lv_obj_t* c = lv_obj_get_child(lvobj, i);
+    if (c != frameCanvas && !lv_obj_has_flag(c, LV_OBJ_FLAG_HIDDEN)) return true;
+  }
   lv_obj_t* parent = lv_obj_get_parent(lvobj);
   if (!parent) return false;
   for (int32_t i = (int32_t)lv_obj_get_child_cnt(parent) - 1; i >= 0; i--) {
@@ -176,7 +182,13 @@ bool StandaloneLuaWindow::othersOnTop()
 
 void StandaloneLuaWindow::checkDirectFrames()
 {
-  if (framesDirect && othersOnTop()) endDirectFrames();
+  if (framesDirect && othersOnTop()) {
+    // between frames: the one being drawn next holds an older picture
+    lcdBuffer->setData(frameShown);
+    if (frameCanvas)
+      lv_canvas_set_buffer(frameCanvas, frameShown, LCD_W, LCD_H, LV_IMG_CF_TRUE_COLOR);
+    endDirectFrames();
+  }
 }
 
 // StickTime build: called whenever the UI runs (MainWindow::run(): the UI loop, the power off
@@ -257,7 +269,10 @@ StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
     lv_obj_set_style_pad_top(lbl, (LCD_H - EdgeTxStyles::STD_FONT_HEIGHT) / 2, LV_PART_MAIN);
     lv_label_set_text(lbl, STR_LOADING);
   } else {
-    if (lcdDirectFramesSupported()) {
+    // three frames instead of one: only where at least 1 MB stays free (the H750 radios with
+    // 8 MB of SDRAM have 2-3 MB of heap)
+    if (lcdDirectFramesSupported() &&
+        availableMemory() > 3 * FRAME_STRIDE + 64 + 1024 * 1024) {
       framesMem = malloc(3 * FRAME_STRIDE + 64);
       if (framesMem) {
         auto p = (uint8_t*)(((uintptr_t)framesMem + 63) & ~(uintptr_t)63);
@@ -428,6 +443,10 @@ void StandaloneLuaWindow::checkEvents()
           lua_settop(lsStandalone, 0);
           closeWindow();
           luaExecStandalone(nextScript);
+        } else if (framesMem && !useLvglLayout()) {
+          // StickTime build: a run() that returns no number (nil) goes on, and so does its frame
+          lua_pop(lsStandalone, 1);
+          frameShow();
         }
       }
     }
@@ -495,7 +514,11 @@ bool StandaloneLuaWindow::displayPopup(event_t event, uint8_t type,
 void StandaloneLuaWindow::clear()
 {
   clearRefs(lsStandalone);
+  // the canvas would go with the window's other LVGL objects: out first, then back
+  if (lcdBuffer) lcdBuffer->removeCanvas();
+  frameCanvas = nullptr;
   Window::clear();
+  if (lcdBuffer) frameCanvas = lcdBuffer->addCanvas(this);
 }
 
 void StandaloneLuaWindow::luaShowError()

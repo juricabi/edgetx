@@ -88,6 +88,15 @@ void lcdDirectFrameWait()
 void lcdDirectFrameShow(uint16_t* frame)
 {
   lcdDirectFrameWait();
+#if defined(LTDC) && !defined(SIMU)
+  // and the last frame buffer swap has happened: the LTDC reloads its registers at the vertical
+  // blank, while drivers report a flush done at a line interrupt that can come a little before
+  // it. Then the buffer shown before is off the display (the tool draws its next frame into it,
+  // a turned-around screen's driver writes its back buffer). Bounded; radios without an LTDC
+  // (SPI screens) never set the bit.
+  for (uint32_t n = 0; (LTDC->SRCR & LTDC_SRCR_VBR) && n < 4000000; n++) {
+  }
+#endif
   // a flush as LVGL starts one: done when the driver calls lcdFlushed()
   disp_drv.draw_buf->flushing = 1;
   disp_drv.draw_buf->flushing_last = 1;
