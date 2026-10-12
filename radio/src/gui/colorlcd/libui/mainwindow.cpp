@@ -54,8 +54,16 @@ void MainWindow::emptyTrash()
   trash.clear();
 }
 
+#if defined(LUA) && !defined(BOOT)
+void standaloneLuaCheckDirect();  // gui/colorlcd/standalone_lua.cpp
+#endif
+
 void MainWindow::run(bool trash)
 {
+#if defined(LUA) && !defined(BOOT)
+  // StickTime build: LVGL gets the display back when anything shows over a Lua tool's frames
+  standaloneLuaCheckDirect();
+#endif
   LvglWrapper::instance()->run();
 
 #if defined(DEBUG_WINDOWS)

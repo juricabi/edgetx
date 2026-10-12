@@ -158,15 +158,44 @@ void StandaloneLuaWindow::endDirectFrames()
   lv_obj_invalidate(lv_layer_top());
 }
 
+// anything EdgeTX shows over the tool: a dialog (a layer of its own), a message bubble (LVGL's
+// top layer), or a window put over it (the power off screen)
+bool StandaloneLuaWindow::othersOnTop()
+{
+  if (hasError || Window::topWindow() != this || !lvobj) return true;
+  if (lv_obj_get_child_cnt(lv_layer_top()) > 0) return true;
+  lv_obj_t* parent = lv_obj_get_parent(lvobj);
+  if (!parent) return false;
+  for (int32_t i = (int32_t)lv_obj_get_child_cnt(parent) - 1; i >= 0; i--) {
+    lv_obj_t* c = lv_obj_get_child(parent, i);
+    if (c == lvobj) return false;
+    if (!lv_obj_has_flag(c, LV_OBJ_FLAG_HIDDEN)) return true;
+  }
+  return false;
+}
+
+void StandaloneLuaWindow::checkDirectFrames()
+{
+  if (framesDirect && othersOnTop()) endDirectFrames();
+}
+
+// StickTime build: called whenever the UI runs (MainWindow::run(): the UI loop, the power off
+// screen, dialogs that wait for an answer). EdgeTX may show something over a tool whose frames
+// are on the display, and then not run the tool at all (a dialog is the window it runs)
+void standaloneLuaCheckDirect()
+{
+  auto w = StandaloneLuaWindow::instance();
+  if (w) w->checkDirectFrames();
+}
+
 void StandaloneLuaWindow::frameShow()
 {
   bool drawn = luaLcdDrawn;
   luaLcdKeepFrame = nullptr;
   luaLcdDrawn = true;
 
-  // straight to the display, unless EdgeTX shows something over the tool (a dialog, a bubble)
-  bool direct = !hasError && Window::topWindow() == this &&
-                lv_obj_get_child_cnt(lv_layer_top()) == 0;
+  // straight to the display, unless EdgeTX shows something over the tool
+  bool direct = !othersOnTop();
 
   if (!drawn) {
     // nothing drawn: the last frame stays (this one holds an older picture)

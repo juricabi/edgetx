@@ -93,6 +93,11 @@ protected:
   void frameStart();
   void frameShow();
   void endDirectFrames();
+  bool othersOnTop();
+
+ public:
+  // the display back to LVGL if anything shows over the tool (see standaloneLuaCheckDirect)
+  void checkDirectFrames();
 
   // pop-ups
   void popupPaint(BitmapBuffer* dc, coord_t x, coord_t y, coord_t w, coord_t h,
