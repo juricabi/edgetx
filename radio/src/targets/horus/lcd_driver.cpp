@@ -191,6 +191,29 @@ static void startLcdRefresh(lv_disp_drv_t *disp_drv, uint16_t *buffer,
 #endif
 }
 
+#if LCD_VERTICAL_INVERT
+// Fast Lua build: a Lua tool's whole frame (see lcdSetDirectFrameCb), turned around into the
+// back buffer and swapped in at the next vertical blank (then lcdFlushed()). lcd.cpp only
+// calls it once the previous swap is done, so the back buffer is off the display.
+static void lcdShowDirectFrame(uint16_t* frame)
+{
+  _copy_rotate_180(_back_buffer, frame, rect_t{0, 0, LCD_W, LCD_H});
+
+  if (_front_buffer == _LCD_BUF_1) {
+    _front_buffer = _LCD_BUF_2;
+    _back_buffer = _LCD_BUF_1;
+  } else {
+    _front_buffer = _LCD_BUF_1;
+    _back_buffer = _LCD_BUF_2;
+  }
+  _update_frame_buffer_addr(_front_buffer);
+
+  // the whole back buffer is written again next time (by a tool frame, or by LVGL, which
+  // draws the whole screen again after the tool's frames)
+  dma_areas.clear();
+}
+#endif
+
 inline void LCD_NRST_LOW()
 {
   gpio_clear(LCD_GPIO_NRST);
@@ -435,6 +458,9 @@ void lcdInit()
   __HAL_LTDC_ENABLE(&hltdc);
 
   lcdSetFlushCb(startLcdRefresh);
+#if LCD_VERTICAL_INVERT
+  lcdSetDirectFrameCb(lcdShowDirectFrame);
+#endif
 }
 
 extern "C" void LTDC_IRQHandler(void)

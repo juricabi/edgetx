@@ -183,6 +183,31 @@ static void startLcdRefresh(lv_disp_drv_t *disp_drv, uint16_t *buffer,
   lcdFlushed();
 }
 
+#if defined(LCD_VERTICAL_INVERT)
+// Fast Lua build: a Lua tool's whole frame (see lcdSetDirectFrameCb), turned around into the
+// back buffer and swapped in at the next vertical blank. As this driver's flush reports done
+// at once, the back buffer is written only once the previous swap has happened (at most a
+// display refresh, bounded so a missing interrupt can't hang the UI).
+static void lcdShowDirectFrame(uint16_t* frame)
+{
+  for (uint32_t n = 0; !_frame_addr_reloaded && n < 4000000; n++) {
+  }
+
+  _copy_rotate_180(_back_buffer, frame, rect_t{0, 0, LCD_W, LCD_H});
+
+  if (_front_buffer == _LCD_BUF_1) {
+    _front_buffer = _LCD_BUF_2;
+    _back_buffer = _LCD_BUF_1;
+  } else {
+    _front_buffer = _LCD_BUF_1;
+    _back_buffer = _LCD_BUF_2;
+  }
+  _update_frame_buffer_addr(_front_buffer);
+
+  lcdFlushed();
+}
+#endif
+
 // LTDC RGB666 data + sync lines (all on AF14). Layout matches the tx15/rm-h750
 // panel wiring: PI12-14 (HSYNC/VSYNC/CLK), PJ1-6 (R2-R7), PJ9-11 + PK0-2
 // (G2-G7), PJ14-15 + PK3-6 (B2-B7), PK7 (DE).
@@ -361,6 +386,9 @@ void lcdInit(void)
   __HAL_LTDC_ENABLE(&hltdc);
 
   lcdSetFlushCb(startLcdRefresh);
+#if defined(LCD_VERTICAL_INVERT)
+  lcdSetDirectFrameCb(lcdShowDirectFrame);
+#endif
 }
 
 extern "C" void LTDC_IRQHandler(void)
