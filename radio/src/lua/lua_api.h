@@ -61,6 +61,17 @@ extern bool luaLcdAllowed;
 class BitmapBuffer;
 extern BitmapBuffer* luaLcdBuffer;
 
+// Fast Lua build: a full screen tool whose frames go straight to the display draws each frame
+// into a buffer that holds an older picture (see StandaloneLuaWindow). luaLcdKeepFrame is the
+// last frame: the tool's first lcd call copies it in, unless that call is lcd.clear().
+extern uint16_t* luaLcdKeepFrame;
+extern bool luaLcdDrawn;
+void luaLcdFirstDraw(bool clears);
+static inline void luaLcdTouch(bool clears = false)
+{
+  if (!luaLcdDrawn) luaLcdFirstDraw(clears);
+}
+
 extern uint32_t luaExtraMemoryUsage;
 void luaInitThemesAndWidgets();
 #endif

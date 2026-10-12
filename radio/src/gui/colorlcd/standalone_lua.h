@@ -79,6 +79,21 @@ protected:
   // GFX
   BitmapBuffer *lcdBuffer = nullptr;
 
+  // Fast Lua build: where the radio can show them (lcdDirectFramesSupported()), the tool draws
+  // into three frames of its own and each finished one goes straight to the display, instead
+  // of LVGL drawing the canvas into its frame buffers: one on the display, one on its way
+  // there, one being drawn. LVGL draws the screen again (the frame on its canvas) whenever
+  // EdgeTX shows something over the tool, after an error, and on closing.
+  void* framesMem = nullptr;
+  uint16_t* frames[3] = {nullptr, nullptr, nullptr};
+  uint16_t* frameShown = nullptr;   // the last finished frame
+  uint8_t frameNext = 0;            // the one the tool draws into next
+  bool framesDirect = false;        // the tool's frames on the display, LVGL invalidation off
+  lv_obj_t* frameCanvas = nullptr;
+  void frameStart();
+  void frameShow();
+  void endDirectFrames();
+
   // pop-ups
   void popupPaint(BitmapBuffer* dc, coord_t x, coord_t y, coord_t w, coord_t h,
                   const char* text, const char* info);

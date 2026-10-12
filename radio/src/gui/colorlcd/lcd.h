@@ -53,5 +53,17 @@ void lcdRefresh();
 
 extern "C" void lcdFlushed();
 
+// Fast Lua build: a full screen Lua tool can put frames of its own on the display, instead of
+// LVGL drawing its canvas into LVGL's frame buffers. Only with LVGL in direct mode, where a
+// flush shows the whole frame it is given (radios that swap frame buffers, and SPI screens
+// that send the frame); radios that turn the picture around on its way to the display build
+// their flush on LVGL's refresh and keep the usual way.
+bool lcdDirectFramesSupported();
+// shows a whole LCD_W x LCD_H frame once the previous flush is done; it stays in use until the
+// next flush is done
+void lcdDirectFrameShow(uint16_t* frame);
+// waits until the last flush is done
+void lcdDirectFrameWait();
+
 // LVGL render rate (capped at refresh rate) and UI task load in %
 void lcdGetPerfStats(uint32_t& fps, uint32_t& taskload);

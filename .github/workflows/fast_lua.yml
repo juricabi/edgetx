@@ -2,10 +2,12 @@
 name: Build fast Lua tools firmware
 # Color radio firmware from this branch (fast-lua-20ms): EdgeTX main plus faster Lua tools.
 # Every push that changes the firmware rebuilds it and replaces the "fast-lua-20ms" prerelease.
+# Test branches (fast-lua-*) only build: their firmware is in the run's artifacts.
 on:
   push:
     branches:
       - 'fast-lua-20ms'
+      - 'fast-lua-direct'
     paths:
       - '.github/workflows/fast_lua.yml'
       - 'cmake/**'
@@ -17,7 +19,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: 'fast-lua-20ms'
+  group: fast-lua-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -75,6 +77,8 @@ jobs:
 
   deploy:
     name: Deploy prerelease
+    # only the fast-lua-20ms branch replaces the prerelease
+    if: github.ref == 'refs/heads/fast-lua-20ms'
     runs-on: ubuntu-latest
     needs: build
     permissions:

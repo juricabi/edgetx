@@ -68,6 +68,28 @@ extern "C" void lcdFlushed()
 
 void lcdRefresh() {}
 
+bool lcdDirectFramesSupported()
+{
+  return lcd_flush_cb != nullptr && disp_drv.direct_mode;
+}
+
+void lcdDirectFrameWait()
+{
+  // as LVGL waits for a flush (lv_refr.c)
+  while (disp_drv.draw_buf && disp_drv.draw_buf->flushing) {
+    if (disp_drv.wait_cb) disp_drv.wait_cb(&disp_drv);
+  }
+}
+
+void lcdDirectFrameShow(uint16_t* frame)
+{
+  lcdDirectFrameWait();
+  // a flush as LVGL starts one: done when the driver calls lcdFlushed()
+  disp_drv.draw_buf->flushing = 1;
+  disp_drv.draw_buf->flushing_last = 1;
+  lcd_flush_cb(&disp_drv, frame, rect_t{0, 0, LCD_W, LCD_H});
+}
+
 static void flushLcd(lv_disp_drv_t* disp_drv, const lv_area_t* area,
                      lv_color_t* color_p)
 {
