@@ -78,9 +78,9 @@ bool lcdDirectFramesSupported()
 }
 
 __attribute__((weak)) int lcdDiagRead(uint32_t* v) { (void)v; return 0; }
-__attribute__((weak)) void lcdDiagSet(bool noTe, int e8a, int e8b, int fast)
+__attribute__((weak)) void lcdDiagSet(bool noTe, int e8a, int e8b, int fast, int vfp, int vbp)
 {
-  (void)noTe; (void)e8a; (void)e8b; (void)fast;
+  (void)noTe; (void)e8a; (void)e8b; (void)fast; (void)vfp; (void)vbp;
 }
 
 void lcdDirectFrameWait()

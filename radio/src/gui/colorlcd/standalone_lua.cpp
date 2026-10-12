@@ -130,7 +130,7 @@ StandaloneLuaWindow* StandaloneLuaWindow::_instance;
 // StickTime build: tells the UI task to run its loop faster while a Lua tool is open
 bool standaloneLuaActive() { return StandaloneLuaWindow::instance() != nullptr; }
 
-// V12 diagnostic build: lcdDiag([noTe [, e8a, e8b [, fast]]]) for the LcdDiag tool. Returns the display
+// V12 diagnostic build: lcdDiag([noTe [, e8a, e8b [, fast [, vfp, vbp]]]]) for the LcdDiag tool. Returns the display
 // driver's values (lcdDiagRead), then the tool's frames (3: straight to the display, 1: through
 // LVGL) and the memory that was free when the tool opened.
 static uint32_t diagFrames = 0, diagFreeMem = 0;
@@ -138,7 +138,7 @@ static int luaLcdDiag(lua_State* L)
 {
   if (lua_gettop(L) >= 1)
     lcdDiagSet(lua_toboolean(L, 1), luaL_optinteger(L, 2, -1), luaL_optinteger(L, 3, -1),
-               luaL_optinteger(L, 4, -1));
+               luaL_optinteger(L, 4, -1), luaL_optinteger(L, 5, -1), luaL_optinteger(L, 6, -1));
   uint32_t v[LCD_DIAG_VALUES];
   int n = lcdDiagRead(v);
   for (int i = 0; i < n; i++) lua_pushinteger(L, v[i]);

@@ -143,6 +143,7 @@ static volatile uint32_t dgIrq, dgPoll, dgNow, dgAbort;
 static volatile bool dgNoTe = false;
 static volatile bool dgFast = true;
 static uint8_t dgE8a = 0x12, dgE8b = 0x00;  // as lcdInit() sets them
+static uint8_t dgVfp = 0x08, dgVbp = 0x02;  // the panel's defaults (lcdInit() leaves them)
 
 // (written for the V12's stream: LCD_SPI_TX_DMA_STREAM is DMA1 stream 4, LCD_SPI is SPI1)
 static_assert(LCD_SPI_TX_DMA_STREAM == LL_DMA_STREAM_4, "LCD TX DMA is not stream 4");
@@ -692,6 +693,7 @@ extern "C" void lcdInit()
 //  9 SPI clock (Hz, from the clock setup)           10 CPU clock (Hz)
 //  11 not waiting for the panel (1)                 12 register E8h (first byte * 256 + second)
 //  13 the window's length (us)                   14 the DMA reads two pixels at a time (1)
+//  15 register B5h (vertical front porch * 256 + back porch)
 int lcdDiagRead(uint32_t* v)
 {
   static uint32_t pub[LCD_DIAG_VALUES];
@@ -723,24 +725,49 @@ int lcdDiagRead(uint32_t* v)
   pub[11] = dgNoTe ? 1 : 0;
   pub[12] = (uint32_t)dgE8a << 8 | dgE8b;
   pub[14] = dgFast ? 1 : 0;
+  pub[15] = (uint32_t)dgVfp << 8 | dgVbp;
   for (int i = 0; i < LCD_DIAG_VALUES; i++) v[i] = pub[i];
   return LCD_DIAG_VALUES;
 }
 
-void lcdDiagSet(bool noTe, int e8a, int e8b, int fast)
+// a panel command and its parameters with the chip select low all along (as CASET and RASET)
+static void lcdDiagCommand(uint8_t cmd, const uint8_t* p, uint32_t n)
+{
+  stm32_spi_select(&lcdSpi);
+  LCD_COMMAND_MODE();
+  stm32_spi_transfer_byte(&lcdSpi, cmd);
+  LCD_DATA_MODE();
+  if (n) stm32_spi_transfer_bytes(&lcdSpi, p, nullptr, n);
+  stm32_spi_unselect(&lcdSpi);
+}
+
+void lcdDiagSet(bool noTe, int e8a, int e8b, int fast, int vfp, int vbp)
 {
   dgNoTe = noTe;
   if (fast >= 0) dgFast = fast != 0;  // from the next chunk on
-  if (e8a < 0 || e8a > 255 || e8b < 0 || e8b > 255) return;
-  if (e8a == dgE8a && e8b == dgE8b) return;
+  bool e8 = e8a >= 0 && e8a <= 255 && e8b >= 0 && e8b <= 255 &&
+            (e8a != dgE8a || e8b != dgE8b);
+  // datasheet: VFP and VBP 2 lines at least, VFP 4 bits, VFP + VBP at most 254
+  bool b5 = vfp >= 2 && vfp <= 15 && vbp >= 2 && vbp <= 127 &&
+            (vfp != dgVfp || vbp != dgVbp);
+  if (!e8 && !b5) return;
   // between frames: the last one out first
   while (lcdState != LCD_IDLE) lcdService();
-  lcdWriteCommand(0xFE);  // inter register enable 1 and 2, as in lcdInit()
-  lcdWriteCommand(0xEF);
-  lcdWriteCommand(0xE8);
-  lcdWriteData((uint8_t)e8a);
-  lcdWriteData((uint8_t)e8b);
-  dgE8a = e8a;
-  dgE8b = e8b;
+  lcdDiagCommand(0xFE, nullptr, 0);  // inter register enable 1 and 2, as in lcdInit()
+  lcdDiagCommand(0xEF, nullptr, 0);
+  if (e8) {
+    // frame rate: DINV[3:0] RTN1[3:0], then RTN2[7:0]
+    const uint8_t p[2] = {(uint8_t)e8a, (uint8_t)e8b};
+    lcdDiagCommand(0xE8, p, 2);
+    dgE8a = e8a;
+    dgE8b = e8b;
+  }
+  if (b5) {
+    // blanking porch: VFP, VBP, HBP (must be written, not used: the default)
+    const uint8_t p[3] = {(uint8_t)vfp, (uint8_t)vbp, 0x14};
+    lcdDiagCommand(0xB5, p, 3);
+    dgVfp = vfp;
+    dgVbp = vbp;
+  }
 }
 #endif

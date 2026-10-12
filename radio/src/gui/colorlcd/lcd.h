@@ -69,12 +69,12 @@ void lcdDirectFrameWait();
 
 // V12 diagnostic build: what the display transfer did over the last second (see the V12
 // display driver for the values); 0 values where the driver has no diagnostics
-#define LCD_DIAG_VALUES 15
+#define LCD_DIAG_VALUES 16
 int lcdDiagRead(uint32_t* v);
 // frames sent without waiting for the panel's refresh (noTe), the panel's frame rate register
 // E8h (two bytes, written when both are 0..255), the DMA reading two pixels at a time (fast:
-// 0 or 1, -1 leaves it)
-void lcdDiagSet(bool noTe, int e8a, int e8b, int fast);
+// 0 or 1, -1 leaves it), the panel's vertical front and back porch (B5h: vfp 2..15, vbp 2..127)
+void lcdDiagSet(bool noTe, int e8a, int e8b, int fast, int vfp, int vbp);
 
 // LVGL render rate (capped at refresh rate) and UI task load in %
 void lcdGetPerfStats(uint32_t& fps, uint32_t& taskload);
