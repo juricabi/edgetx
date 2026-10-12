@@ -120,8 +120,8 @@ jobs:
             frame goes to the screen as soon as the tool has drawn it
           - **new:** a full screen tool's frames go straight to the display instead of being
             copied into LVGL's frame buffers first: three frames in turn (one on the display,
-            one waiting for the display's next refresh, one being drawn), so the tool doesn't
-            wait for the display either. On the radios with a screen mounted upside down
+            one waiting for the display's next refresh, one being drawn), so on most radios the
+            tool doesn't wait for the display either. On the radios with a screen mounted upside down
             (TX16S, T16, X10, X10 Express, H17, older F16) the frame is turned around straight
             into the display's buffer, one pass instead of three. EdgeTX's own screens (a
             dialog, a message, an error) take over the display whenever they need it
