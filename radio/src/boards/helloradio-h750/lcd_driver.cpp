@@ -153,6 +153,20 @@ static void lcdChunkStart()
 {
   uint32_t n = lcdXferLeft > LCD_XFER_CHUNK ? LCD_XFER_CHUNK : lcdXferLeft;
   lcdDmaClearFlags();
+  // Reading one pixel at a time, the DMA waits for SDRAM on every pixel and the SPI for the
+  // DMA: a frame went out at 86 Mbit/s, in 14.5 ms, longer than one refresh of the V12's
+  // 74 Hz panel (13.5 ms), so every frame took two refreshes. Two pixels at a time through
+  // the DMA's FIFO keep the SPI at its 96 MHz: 13 ms. Word reads need a word aligned buffer
+  // and an even count (DMA_SxNDTR counts the SPI's half-words).
+  if (((uintptr_t)lcdXferData & 3) == 0 && (n & 1) == 0) {
+    LL_DMA_EnableFifoMode(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM);
+    LL_DMA_SetFIFOThreshold(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, LL_DMA_FIFOTHRESHOLD_FULL);
+    LL_DMA_SetMemoryBurstxfer(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, LL_DMA_MBURST_SINGLE);
+    LL_DMA_SetMemorySize(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, LL_DMA_MDATAALIGN_WORD);
+  } else {
+    LL_DMA_DisableFifoMode(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM);
+    LL_DMA_SetMemorySize(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, LL_DMA_MDATAALIGN_HALFWORD);
+  }
   LL_DMA_SetMemoryAddress(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, (uintptr_t)lcdXferData);
   LL_DMA_SetDataLength(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM, n);
   LL_DMA_EnableStream(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM);
@@ -241,7 +255,11 @@ static void lcdService()
 {
   uint32_t primask = __get_PRIMASK();
   __disable_irq();
-  uint32_t age = timersGetUsTick() - lcdStateSince;
+  // with interrupts off timersGetUsTick() can be up to 1 ms behind (its millisecond interrupt
+  // waits): a frame that started less than 1 ms ago must not look 71 minutes old (and be
+  // dropped, or sent before the vertical blank)
+  int32_t age = (int32_t)(timersGetUsTick() - lcdStateSince);
+  if (age < 0) age = 0;
   if (lcdState == LCD_WAIT_VSYNC) {
     if (gpio_read(LCD_FMARK) || age > LCD_VSYNC_TIMEOUT_US) {
       LL_EXTI_DisableIT_0_31(LCD_FMARK_EXTI_LINE);

@@ -254,7 +254,11 @@ static void lcdService()
 {
   uint32_t primask = __get_PRIMASK();
   __disable_irq();
-  uint32_t age = timersGetUsTick() - lcdStateSince;
+  // with interrupts off timersGetUsTick() can be up to 1 ms behind (its millisecond interrupt
+  // waits): a frame that started less than 1 ms ago must not look 71 minutes old (and be
+  // dropped, or sent before the vertical blank)
+  int32_t age = (int32_t)(timersGetUsTick() - lcdStateSince);
+  if (age < 0) age = 0;
   if (lcdState == LCD_WAIT_VSYNC) {
     if (gpio_read(LCD_FMARK) || age > LCD_VSYNC_TIMEOUT_US) {
       lcdFmarkDisarm();

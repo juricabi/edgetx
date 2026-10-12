@@ -137,6 +137,10 @@ jobs:
             ITCM instead of from SDRAM through the instruction cache
           - HelloRadioSky V12 and Flysky PA01 (SPI screens): frames go to the display in the
             background (started at the display's vertical blank); the PA01 is untested so far
+          - **new:** V12: the DMA reads two pixels at a time, so a frame goes out in 13 ms,
+            within one refresh of the V12's 74 Hz panel: Lua tools reach 50 fps (before, every
+            frame took two refreshes: 37-42 fps). V12 and PA01: no more transfers dropped a few
+            times a second (a clock read with interrupts off looked like a timeout)
 
           With no tool open the radio runs like stock `main` (the V12's and PA01's background
           display transfer is always on). SYS > Version shows `-fastlua`.
