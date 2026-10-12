@@ -135,6 +135,14 @@ static const uint16_t* lcdXferData;
 static uint32_t lcdXferLeft;
 static volatile uint32_t lcdStateSince;
 
+// Diagnostic build: what the transfer does, read by lcdDiagRead(). The FMARK interrupt stays
+// enabled so that every pulse is counted (the panel's refresh rate).
+static volatile uint32_t dgQueued, dgSendT0, dgTeLast;
+static volatile uint32_t dgFrames, dgSendSum, dgWaitSum, dgTeSum, dgTeN;
+static volatile uint32_t dgIrq, dgPoll, dgNow, dgAbort;
+static volatile bool dgNoTe = false;
+static uint8_t dgE8a = 0x12, dgE8b = 0x00;  // as lcdInit() sets them
+
 // (written for the V12's stream: LCD_SPI_TX_DMA_STREAM is DMA1 stream 4, LCD_SPI is SPI1)
 static_assert(LCD_SPI_TX_DMA_STREAM == LL_DMA_STREAM_4, "LCD TX DMA is not stream 4");
 
@@ -170,7 +178,10 @@ static void lcdChunkStart()
 static void lcdStartFrame()
 {
   lcdState = LCD_SENDING;
-  lcdStateSince = timersGetUsTick();
+  uint32_t now = timersGetUsTick();
+  lcdStateSince = now;
+  dgSendT0 = now;
+  dgWaitSum += now - dgQueued;
 
   stm32_spi_select(&lcdSpi);
   LCD_COMMAND_MODE();
@@ -184,6 +195,8 @@ static void lcdStartFrame()
 
 static void lcdEndFrame()
 {
+  dgSendSum += timersGetUsTick() - dgSendT0;
+  dgFrames++;
   stm32_spi_unselect(&lcdSpi);
   stm32_spi_set_data_width(&lcdSpi, LL_SPI_DATAWIDTH_8BIT);
   lcdState = LCD_IDLE;
@@ -208,6 +221,7 @@ static void lcdChunkDone()
 // a transfer that never ends (it should not happen): stop it and drop the frame
 static void lcdAbortFrame()
 {
+  dgAbort++;
   LL_SPI_DisableIT_EOT(LCD_SPI);
   LL_DMA_DisableStream(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM);
   while (LL_DMA_IsEnabledStream(LCD_SPI_DMA, LCD_SPI_TX_DMA_STREAM));
@@ -229,8 +243,16 @@ extern "C" void EXTI15_10_IRQHandler(void)
 {
   if (LL_EXTI_IsActiveFlag_0_31(LCD_FMARK_EXTI_LINE)) {
     LL_EXTI_ClearFlag_0_31(LCD_FMARK_EXTI_LINE);
-    LL_EXTI_DisableIT_0_31(LCD_FMARK_EXTI_LINE);
-    if (lcdState == LCD_WAIT_VSYNC) lcdStartFrame();
+    uint32_t now = timersGetUsTick();
+    if (dgTeLast) {
+      dgTeSum += now - dgTeLast;
+      dgTeN++;
+    }
+    dgTeLast = now;
+    if (lcdState == LCD_WAIT_VSYNC && !dgNoTe) {
+      dgIrq++;
+      lcdStartFrame();
+    }
   }
 }
 
@@ -243,9 +265,8 @@ static void lcdService()
   __disable_irq();
   uint32_t age = timersGetUsTick() - lcdStateSince;
   if (lcdState == LCD_WAIT_VSYNC) {
-    if (gpio_read(LCD_FMARK) || age > LCD_VSYNC_TIMEOUT_US) {
-      LL_EXTI_DisableIT_0_31(LCD_FMARK_EXTI_LINE);
-      LL_EXTI_ClearFlag_0_31(LCD_FMARK_EXTI_LINE);
+    if (dgNoTe || gpio_read(LCD_FMARK) || age > LCD_VSYNC_TIMEOUT_US) {
+      dgPoll++;
       lcdStartFrame();
     }
   } else if (lcdState == LCD_SENDING) {
@@ -289,13 +310,12 @@ static void startLcdRefresh(lv_disp_drv_t *disp_drv, uint16_t *buffer,
   uint32_t primask = __get_PRIMASK();
   __disable_irq();
   lcdState = LCD_WAIT_VSYNC;
-  lcdStateSince = timersGetUsTick();
-  LL_EXTI_ClearFlag_0_31(LCD_FMARK_EXTI_LINE);
-  LL_EXTI_EnableIT_0_31(LCD_FMARK_EXTI_LINE);
-  if (gpio_read(LCD_FMARK)) {
-    // already in the blank
-    LL_EXTI_DisableIT_0_31(LCD_FMARK_EXTI_LINE);
-    LL_EXTI_ClearFlag_0_31(LCD_FMARK_EXTI_LINE);
+  uint32_t now = timersGetUsTick();
+  lcdStateSince = now;
+  dgQueued = now;
+  if (dgNoTe || gpio_read(LCD_FMARK)) {
+    // already in the blank (or not waiting for it)
+    dgNow++;
     lcdStartFrame();
   }
   __set_PRIMASK(primask);
@@ -311,6 +331,7 @@ static void lcdBackgroundTransferInit()
   LL_EXTI_DisableFallingTrig_0_31(LCD_FMARK_EXTI_LINE);
   LL_EXTI_EnableRisingTrig_0_31(LCD_FMARK_EXTI_LINE);
   LL_EXTI_ClearFlag_0_31(LCD_FMARK_EXTI_LINE);
+  LL_EXTI_EnableIT_0_31(LCD_FMARK_EXTI_LINE);  // diagnostic build: every pulse counted
   NVIC_SetPriority(EXTI15_10_IRQn, LCD_IRQ_PRIORITY);
   NVIC_EnableIRQ(EXTI15_10_IRQn);
 
@@ -645,3 +666,62 @@ extern "C" void lcdInit()
 #endif
   lcdSetFlushCb(startLcdRefresh);
 }
+
+#if defined(LCD_BACKGROUND_TRANSFER)
+// Diagnostic build. Over the last second (refreshed once a second):
+//  0 frames sent        1 send time (us, average)   2 wait for the panel (us, average)
+//  3 FMARK period (us)  4 FMARK pulses              5 frames started by the FMARK interrupt
+//  6 started by polling 7 started at once           8 transfers given up
+//  9 SPI clock (Hz, from the clock setup)           10 CPU clock (Hz)
+//  11 not waiting for the panel (1)                 12 register E8h (first byte * 256 + second)
+//  13 the window's length (us)
+int lcdDiagRead(uint32_t* v)
+{
+  static uint32_t pub[LCD_DIAG_VALUES];
+  static uint32_t win0 = 0;
+  uint32_t now = timersGetUsTick();
+  if (win0 == 0) win0 = now;
+  uint32_t win = now - win0;
+  if (win >= 1000000) {
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    uint32_t f = dgFrames, s = dgSendSum, w = dgWaitSum, ts = dgTeSum, tn = dgTeN;
+    pub[5] = dgIrq; pub[6] = dgPoll; pub[7] = dgNow; pub[8] = dgAbort;
+    dgFrames = dgSendSum = dgWaitSum = dgTeSum = dgTeN = 0;
+    dgIrq = dgPoll = dgNow = dgAbort = 0;
+    __set_PRIMASK(primask);
+    pub[0] = f;
+    pub[1] = f ? s / f : 0;
+    pub[2] = f ? w / f : 0;
+    pub[3] = tn ? ts / tn : 0;
+    pub[4] = tn;
+    pub[13] = win;
+    win0 = now;
+  }
+  uint32_t mbr = (LCD_SPI->CFG1 & SPI_CFG1_MBR) >> SPI_CFG1_MBR_Pos;
+  pub[9] = LL_RCC_GetSPIClockFreq(LL_RCC_SPI123_CLKSOURCE) / (2u << mbr);
+  LL_RCC_ClocksTypeDef clocks;
+  LL_RCC_GetSystemClocksFreq(&clocks);
+  pub[10] = clocks.SYSCLK_Frequency;
+  pub[11] = dgNoTe ? 1 : 0;
+  pub[12] = (uint32_t)dgE8a << 8 | dgE8b;
+  for (int i = 0; i < LCD_DIAG_VALUES; i++) v[i] = pub[i];
+  return LCD_DIAG_VALUES;
+}
+
+void lcdDiagSet(bool noTe, int e8a, int e8b)
+{
+  dgNoTe = noTe;
+  if (e8a < 0 || e8a > 255 || e8b < 0 || e8b > 255) return;
+  if (e8a == dgE8a && e8b == dgE8b) return;
+  // between frames: the last one out first
+  while (lcdState != LCD_IDLE) lcdService();
+  lcdWriteCommand(0xFE);  // inter register enable 1 and 2, as in lcdInit()
+  lcdWriteCommand(0xEF);
+  lcdWriteCommand(0xE8);
+  lcdWriteData((uint8_t)e8a);
+  lcdWriteData((uint8_t)e8b);
+  dgE8a = e8a;
+  dgE8b = e8b;
+}
+#endif

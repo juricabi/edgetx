@@ -67,5 +67,13 @@ void lcdDirectFrameShow(uint16_t* frame);
 // waits until the last flush is done
 void lcdDirectFrameWait();
 
+// V12 diagnostic build: what the display transfer did over the last second (see the V12
+// display driver for the values); 0 values where the driver has no diagnostics
+#define LCD_DIAG_VALUES 14
+int lcdDiagRead(uint32_t* v);
+// frames sent without waiting for the panel's refresh (noTe), and the panel's frame rate
+// register E8h (two bytes, written when both are 0..255)
+void lcdDiagSet(bool noTe, int e8a, int e8b);
+
 // LVGL render rate (capped at refresh rate) and UI task load in %
 void lcdGetPerfStats(uint32_t& fps, uint32_t& taskload);

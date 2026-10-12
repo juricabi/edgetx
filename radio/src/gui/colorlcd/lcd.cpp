@@ -77,6 +77,12 @@ bool lcdDirectFramesSupported()
   return lcd_direct_cb != nullptr;
 }
 
+__attribute__((weak)) int lcdDiagRead(uint32_t* v) { (void)v; return 0; }
+__attribute__((weak)) void lcdDiagSet(bool noTe, int e8a, int e8b)
+{
+  (void)noTe; (void)e8a; (void)e8b;
+}
+
 void lcdDirectFrameWait()
 {
   // as LVGL waits for a flush (lv_refr.c)

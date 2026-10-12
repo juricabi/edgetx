@@ -8,6 +8,7 @@ on:
     branches:
       - 'fast-lua-20ms'
       - 'fast-lua-direct'
+      - 'fast-lua-v12diag'
     paths:
       - '.github/workflows/fast_lua.yml'
       - 'cmake/**'
@@ -31,23 +32,9 @@ jobs:
       fail-fast: false
       matrix:
         # color radios only: the change is for color screens
+        # V12 diagnostic build: the V12 only
         target:
-          - nv14;el18;nb4p
-          - pl18;pl18ev;pl18u
-          - pa01
-          - t15;t16;t18;t22
-          - tx16s;f16;v16
-          - tx16smk3
-          - x10;x10express
-          - x12s
-          - st16
-          - c14
-          - tx15;gx15
-          - t15pro
-          - t15h7
-          - h17
           - v12
-          - v15
     container:
       image: ghcr.io/edgetx/edgetx-dev:latest
       volumes:
@@ -61,7 +48,7 @@ jobs:
       - name: Build firmware ${{ matrix.target }}
         env:
           FLAVOR: ${{ matrix.target }}
-          EDGETX_VERSION_SUFFIX: fastlua
+          EDGETX_VERSION_SUFFIX: v12diag
           CMAKE_BUILD_PARALLEL_LEVEL: 4
         run: ./tools/build-gh.sh
 

@@ -130,6 +130,22 @@ StandaloneLuaWindow* StandaloneLuaWindow::_instance;
 // StickTime build: tells the UI task to run its loop faster while a Lua tool is open
 bool standaloneLuaActive() { return StandaloneLuaWindow::instance() != nullptr; }
 
+// V12 diagnostic build: lcdDiag([noTe [, e8a, e8b]]) for the LcdDiag tool. Returns the display
+// driver's values (lcdDiagRead), then the tool's frames (3: straight to the display, 1: through
+// LVGL) and the memory that was free when the tool opened.
+static uint32_t diagFrames = 0, diagFreeMem = 0;
+static int luaLcdDiag(lua_State* L)
+{
+  if (lua_gettop(L) >= 1)
+    lcdDiagSet(lua_toboolean(L, 1), luaL_optinteger(L, 2, -1), luaL_optinteger(L, 3, -1));
+  uint32_t v[LCD_DIAG_VALUES];
+  int n = lcdDiagRead(v);
+  for (int i = 0; i < n; i++) lua_pushinteger(L, v[i]);
+  lua_pushinteger(L, diagFrames);
+  lua_pushinteger(L, diagFreeMem);
+  return n + 2;
+}
+
 // StickTime build: how long the tool's last run() took, and how long putting that frame on
 // the screen took (waiting for the display, then LVGL drawing it, or handing the frame to the
 // display), in microseconds. The tool reads them as the globals TOOL_RUN_US and TOOL_SHOW_US.
@@ -271,6 +287,7 @@ StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
   } else {
     // three frames instead of one: only where at least 1 MB stays free (the H750 radios with
     // 8 MB of SDRAM have 2-3 MB of heap)
+    diagFreeMem = availableMemory();
     if (lcdDirectFramesSupported() &&
         availableMemory() > 3 * FRAME_STRIDE + 64 + 1024 * 1024) {
       framesMem = malloc(3 * FRAME_STRIDE + 64);
@@ -285,6 +302,7 @@ StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
                           : new BitmapBuffer(BMP_RGB565, LCD_W, LCD_H);
     frameCanvas = lcdBuffer->addCanvas(this);
     lcdBuffer->setFastDraw(true);
+    diagFrames = framesMem ? 3 : 1;
 
     lcdBuffer->clear();
     lcdBuffer->drawText(LCD_W / 2, LCD_H / 2 - EdgeTxStyles::STD_FONT_HEIGHT, STR_LOADING,
@@ -297,6 +315,8 @@ StandaloneLuaWindow::StandaloneLuaWindow(bool useLvgl, int initFn, int runFn) :
 
   // setup LUA event handler
   setupHandler(this);
+
+  lua_register(lsStandalone, "lcdDiag", luaLcdDiag);
 
   lua_gc(lsStandalone, LUA_GCCOLLECT, 0);
 
