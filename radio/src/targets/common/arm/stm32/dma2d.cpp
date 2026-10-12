@@ -56,6 +56,38 @@ void DMAInit(void)
 }
 #endif
 
+// Fills with DMA2D (register to memory): it writes straight to memory, where the CPU's stores
+// on Cortex-M7 first read each line into the data cache. Callers wait with DMAWaitAndSyncCache().
+void DMAFillRect(uint16_t *dest, uint16_t destw, uint16_t desth, uint16_t x,
+                 uint16_t y, uint16_t w, uint16_t h, uint16_t color)
+{
+  (void)desth;
+  DMAWait();
+
+#if __CORTEX_M >= 0x07
+  SCB_CleanInvalidateDCache();
+#endif
+
+  LL_DMA2D_DeInit(DMA2D);
+
+  LL_DMA2D_InitTypeDef DMA2D_InitStruct;
+  LL_DMA2D_StructInit(&DMA2D_InitStruct);
+
+  DMA2D_InitStruct.Mode = LL_DMA2D_MODE_R2M;
+  DMA2D_InitStruct.ColorMode = LL_DMA2D_OUTPUT_MODE_RGB565;
+  DMA2D_InitStruct.OutputMemoryAddress = CONVERT_PTR_UINT(dest + y*destw + x);
+  DMA2D_InitStruct.LineOffset = destw - w;
+  DMA2D_InitStruct.NbrOfLines = h;
+  DMA2D_InitStruct.NbrOfPixelsPerLines = w;
+  LL_DMA2D_Init(DMA2D, &DMA2D_InitStruct);
+  // the fill color, in the output format (RGB565)
+  LL_DMA2D_SetOutputColor(DMA2D, color);
+
+  /* Start Transfer */
+  dma2dCacheDirty = true;
+  LL_DMA2D_Start(DMA2D);
+}
+
 void DMACopyBitmap(uint16_t *dest, uint16_t destw, uint16_t desth, uint16_t x,
                    uint16_t y, const uint16_t *src, uint16_t srcw,
                    uint16_t srch, uint16_t srcx, uint16_t srcy, uint16_t w,

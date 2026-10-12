@@ -270,4 +270,6 @@ class BitmapBuffer
   lv_draw_ctx_t* draw_ctx = nullptr;
   bool fastDraw = false;
   void fastFill(coord_t x, coord_t y, coord_t w, coord_t h, pixel_t color);
+  // fast fills from this size on go through DMA2D
+  static constexpr int FAST_FILL_DMA_PIXELS = 4096;
 };
