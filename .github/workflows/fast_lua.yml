@@ -27,6 +27,8 @@ jobs:
     name: Build firmware
     runs-on: ubuntu-latest
     strategy:
+      # every radio builds even when one fails (all the errors in one run)
+      fail-fast: false
       matrix:
         # color radios only: the change is for color screens
         target:
