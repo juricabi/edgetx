@@ -162,6 +162,12 @@ void drawSleepBitmap()
   (new StaticIcon(shutdownWindow, 0, 0, ICON_SHUTDOWN, COLOR_THEME_PRIMARY2_INDEX))
       ->center(LCD_W, LCD_H);
 
+#if defined(LUA)
+  // StickTime build: over a Lua tool whose frames are on the display
+  extern void standaloneLuaCheckDirect();
+  standaloneLuaCheckDirect();
+#endif
+
   // Force screen refresh
   lv_refr_now(nullptr);
 }
