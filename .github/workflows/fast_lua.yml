@@ -145,7 +145,7 @@ jobs:
           With no tool open the radio runs like stock `main` (the V12's and PA01's background
           display transfer is always on). SYS > Version shows `-fastlua`.
           EOF
-          printf '\n**Commit:** %s\n**Built:** %s\n\nThese are test builds of a development branch: back up your SD card first.\n' \
+          printf '\n**Commit:** %s\n**Built:** %s\n\nThese are test builds of a development branch: back up your SD card first.\n\nfast-lua is my fork of EdgeTX, and EdgeTX itself takes donations on Open Collective: https://opencollective.com/edgetx. If you like it, you can buy me a coffee on Ko-fi: https://ko-fi.com/juricabi\n' \
             "$GITHUB_SHA" "$build_date" >> notes.md
           if gh release view fast-lua-20ms --repo "$REPO" > /dev/null 2>&1; then
             gh release upload fast-lua-20ms "$release_filename" --clobber --repo "$REPO"
