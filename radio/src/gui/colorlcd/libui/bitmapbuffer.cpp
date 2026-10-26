@@ -324,6 +324,19 @@ BMP_FASTCODE void BitmapBuffer::fastFill(coord_t x, coord_t y, coord_t w, coord_
   }
 #endif
   DMAWaitAndSyncCache();
+  if (w == 1) {
+    // one column (a vertical line, the side of a 1-pixel rectangle): when its first and
+    // last row are in the buffer, so is every row between: step a pointer down the rows
+    // with no check per row. Otherwise the loop below draws it row by row, as before.
+    pixel_t* p = getPixelPtrAbs(x, y);
+    if (p >= data && p + (h - 1) * _width < data_end) {
+      for (coord_t j = 0; j < h; j++) {
+        *p = color;
+        p += _width;
+      }
+      return;
+    }
+  }
   const pixel_pair_t pair = color | ((uint32_t)color << 16);
   for (coord_t j = 0; j < h; j++) {
     pixel_t* p = getPixelPtrAbs(x, y + j);
