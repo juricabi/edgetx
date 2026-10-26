@@ -309,6 +309,14 @@
 #define TR_VTELEMUNIT_28               "us"
 #define TR_VTELEMUNIT_29               "km"
 #define TR_VTELEMUNIT_30               "dBm"
+#define TR_VTELEMUNIT_31               ""
+#define TR_VTELEMUNIT_32               ""
+#define TR_VTELEMUNIT_33               ""
+#define TR_VTELEMUNIT_34               ""
+#define TR_VTELEMUNIT_35               ""
+#define TR_VTELEMUNIT_36               "h"
+#define TR_VTELEMUNIT_37               "min"
+#define TR_VTELEMUNIT_38               "s"
 
 #define TR_VTELEMSCREENTYPE_1          "Niente"
 #define TR_VTELEMSCREENTYPE_2          "Valori"
@@ -540,6 +548,11 @@
 #define TR_BATTERY_RANGE                TR("Int. Batt.", "Intervallo batteria")
 #define TR_BATTERYCHARGING              "Ricarica..."
 #define TR_BATTERYFULL                  "Bat. carica"
+#define TR_CHARGE_DETECTING             "Rilevamento..."
+#define TR_CHARGE_TOPPING_OFF           "Completamento..."
+#define TR_CHARGE_NOT_CHARGING          "Non in carica"
+#define TR_PRESS_RTN_TO_CLOSE           "Premi RTN per chiudere"
+#define TR_PRESS_RTN_TO_POWER_OFF       "Premi RTN per spegnere"
 #define TR_BATTERYNONE                  "Assente!"
 #define TR_BATTERYWARNING               TR("Batt. Bassa", "Batteria Scarica")
 #define TR_INACTIVITYALARM              "Inattività"
@@ -716,6 +729,8 @@
 #define TR_REPEAT_AT_ZERO               "Ripeti a Zero"
 #define TR_BATT_CALIB                   TR("Calibra batt.", "Calibra batteria")
 #define TR_VOLTAGE                      TR("Voltagg.","Voltaggio")
+#define TR_MODULE_SENSOR_VOLTAGE       "Tensione"
+#define TR_MODULE_SENSOR_CURRENT       "Corrente"
 #define TR_SELECT_MODEL                 "Scegli Modello"
 #define TR_SELECT_MODE                  "Seleziona modo"
 #define TR_CREATE_MODEL                 "Crea Modello"
@@ -777,6 +792,8 @@
 #define TR_SPECTRUM_ANALYSER_INT        "Spettro (INT)"
 #define TR_GHOST_MODULE_CONFIG         "Config. modulo Ghost"
 #define TR_GPS_MODEL_LOCATOR           "Trova modello con GPS"
+#define TR_GPS_URI_STANDARD            "Standard"
+#define TR_GPS_URI_APPLE_MAPS          "Apple Maps"
 #define TR_REFRESH                     "Ricarica"
 #define TR_SDCARD_FULL                  "Scheda SD piena"
 #define TR_SDCARD_FULL_EXT  TR_BW_COL(TR_SDCARD_FULL "\036Log e screenshot" LCDW_128_LINEBREAK "disattivati", TR_SDCARD_FULL "\nLog e screenshot disattivati")

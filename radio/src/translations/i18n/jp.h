@@ -309,6 +309,14 @@
 #define TR_VTELEMUNIT_28               "us"
 #define TR_VTELEMUNIT_29               "km"
 #define TR_VTELEMUNIT_30               "dBm"
+#define TR_VTELEMUNIT_31               ""
+#define TR_VTELEMUNIT_32               ""
+#define TR_VTELEMUNIT_33               ""
+#define TR_VTELEMUNIT_34               ""
+#define TR_VTELEMUNIT_35               ""
+#define TR_VTELEMUNIT_36               "h"
+#define TR_VTELEMUNIT_37               "min"
+#define TR_VTELEMUNIT_38               "s"
 
 #define TR_VTELEMSCREENTYPE_1          "無効"
 #define TR_VTELEMSCREENTYPE_2          "数値"
@@ -539,6 +547,11 @@
 #define TR_BATTERY_RANGE               TR("Batt. range", "バッテリー表示範囲")
 #define TR_BATTERYCHARGING             "充電中..."
 #define TR_BATTERYFULL                 "フル充電"
+#define TR_CHARGE_DETECTING            "検出中..."
+#define TR_CHARGE_TOPPING_OFF          "仕上げ充電中..."
+#define TR_CHARGE_NOT_CHARGING         "未充電"
+#define TR_PRESS_RTN_TO_CLOSE          "RTNを押して閉じる"
+#define TR_PRESS_RTN_TO_POWER_OFF      "RTNを押して電源オフ"
 #define TR_BATTERYNONE                 "バッテリー空!!"
 #define TR_BATTERYWARNING              "バッテリー低値"
 #define TR_INACTIVITYALARM             "無効な状態"
@@ -715,6 +728,8 @@
 #define TR_REPEAT_AT_ZERO              "ゼロ リピート"
 #define TR_BATT_CALIB                  TR("Batt. calib", "バッテリー\nキャリブレーション")
 #define TR_VOLTAGE                     TR("Voltage", "電圧ソース")
+#define TR_MODULE_SENSOR_VOLTAGE       "電圧"
+#define TR_MODULE_SENSOR_CURRENT       "電流"
 #define TR_SELECT_MODEL                "モデル選択"
 #define TR_SELECT_MODE                 "モード選択"
 #define TR_CREATE_MODEL                "モデル作成"
@@ -776,6 +791,8 @@
 #define TR_SPECTRUM_ANALYSER_INT       "スペクトラム\n(内部)"
 #define TR_GHOST_MODULE_CONFIG         "Ghost module config"
 #define TR_GPS_MODEL_LOCATOR           "GPS model locator"
+#define TR_GPS_URI_STANDARD            "Standard"
+#define TR_GPS_URI_APPLE_MAPS          "Apple Maps"
 #define TR_REFRESH                     "Refresh"
 #define TR_SDCARD_FULL                 "SDカード空き容量なし"
 #define   TR_SDCARD_FULL_EXT            TR_BW_COL(TR_SDCARD_FULL "\036Logs & Screenshots" LCDW_128_LINEBREAK "disabled", TR_SDCARD_FULL "\nログとスクリーンショット保存が無効")

@@ -105,6 +105,7 @@ namespace Board {
     BOARD_IFLIGHT_COMMANDO14,
     BOARD_HELLORADIOSKY_V12,
     BOARD_SENDUWING_H17,
+    BOARD_JUMPER_T18H7,
     BOARD_TYPE_COUNT,
     BOARD_TYPE_MAX = BOARD_TYPE_COUNT - 1
   };
@@ -221,6 +222,9 @@ namespace Board {
   enum Capability {
     Air,
     BacklightLevelMin,
+    BluetoothAuxPort,
+    BluetoothBuiltin,
+    BluetoothOptional,
     CPU,
     CPUType,
     FlexInputs,
@@ -232,12 +236,13 @@ namespace Board {
     Gyros,
     HasAudioMuteGPIO,
     HasAuxSerialMode,
+    HasAuxSerialPower,
     HasAux2SerialMode,
+    HasAux2SerialPower,
     HasBacklightColor,
     HasBlingLEDS,
     HasStatusLedPwm,
     StatusLedColors,
-    HasBluetooth,
     HasColorLcd,
     HasExternalAntenna,
     HasExternalModuleSupport,
@@ -248,7 +253,6 @@ namespace Board {
     HasIntModuleHeartbeatGPIO,
     HasRTC,
     HasSDCard,
-    HasSoftwareSerialPower,
     HasSwitchableJack,
     HasTrainerModuleCPPM,
     HasTrainerModuleSBUS,
@@ -607,6 +611,11 @@ inline bool IS_JUMPER_T18(Board::Type board)
   return board == Board::BOARD_JUMPER_T18;
 }
 
+inline bool IS_JUMPER_T18H7(Board::Type board)
+{
+  return board == Board::BOARD_JUMPER_T18H7;
+}
+
 inline bool IS_JUMPER_T20(Board::Type board)
 {
   return board == Board::BOARD_JUMPER_T20 || board == Board::BOARD_JUMPER_T20V2;
@@ -713,6 +722,7 @@ inline bool IS_FAMILY_T16(Board::Type board)
          board == Board::BOARD_JUMPER_T15H7 ||
          board == Board::BOARD_JUMPER_T16 ||
          board == Board::BOARD_JUMPER_T18 ||
+         board == Board::BOARD_JUMPER_T18H7 ||
          board == Board::BOARD_RADIOMASTER_TX15 ||
          board == Board::BOARD_RADIOMASTER_GX15 ||
          board == Board::BOARD_RADIOMASTER_TX16S ||

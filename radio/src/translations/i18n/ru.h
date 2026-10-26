@@ -312,6 +312,14 @@
 #define TR_VTELEMUNIT_28               "us"
 #define TR_VTELEMUNIT_29               "km"
 #define TR_VTELEMUNIT_30               "dBm"
+#define TR_VTELEMUNIT_31               ""
+#define TR_VTELEMUNIT_32               ""
+#define TR_VTELEMUNIT_33               ""
+#define TR_VTELEMUNIT_34               ""
+#define TR_VTELEMUNIT_35               ""
+#define TR_VTELEMUNIT_36               "h"
+#define TR_VTELEMUNIT_37               "min"
+#define TR_VTELEMUNIT_38               "s"
 
 #define TR_VTELEMSCREENTYPE_1          "Нет"
 #define TR_VTELEMSCREENTYPE_2          "Цифры"
@@ -542,6 +550,11 @@
 #define TR_BATTERY_RANGE               TR("Диапаз АКБ", "Диапаз АКБ")
 #define TR_BATTERYCHARGING             "Зарядка..."
 #define TR_BATTERYFULL                 "АКБ Заряжена"
+#define TR_CHARGE_DETECTING            "Определение..."
+#define TR_CHARGE_TOPPING_OFF          "Дозарядка..."
+#define TR_CHARGE_NOT_CHARGING         "Нет зарядки"
+#define TR_PRESS_RTN_TO_CLOSE          "Нажмите RTN для закрытия"
+#define TR_PRESS_RTN_TO_POWER_OFF      "Нажмите RTN для выключения"
 #define TR_BATTERYNONE                 "АКБ Отсутст"
 #define TR_BATTERYWARNING              "АКБ Разряж"
 #define TR_INACTIVITYALARM             "Бездействие"
@@ -718,6 +731,8 @@
 #define TR_REPEAT_AT_ZERO              "Повт при нуле"
 #define TR_BATT_CALIB                  TR("Калибр АКБ", "Калибр АКБ")
 #define TR_VOLTAGE                     TR("Напряжение", "Напряжение")
+#define TR_MODULE_SENSOR_VOLTAGE       "Напряжение"
+#define TR_MODULE_SENSOR_CURRENT       "Ток"
 #define TR_SELECT_MODEL                "Выбор модели"
 #define TR_SELECT_MODE                 "Выбрать модель"
 #define TR_CREATE_MODEL                "Создать модель"
@@ -779,6 +794,8 @@
 #define TR_SPECTRUM_ANALYSER_INT       "Спек анализ (Внут)"
 #define TR_GHOST_MODULE_CONFIG         "Ghost module config"
 #define TR_GPS_MODEL_LOCATOR           "GPS model locator"
+#define TR_GPS_URI_STANDARD            "Standard"
+#define TR_GPS_URI_APPLE_MAPS          "Apple Maps"
 #define TR_REFRESH                     "Refresh"
 #define TR_SDCARD_FULL                 "SD карта заполнена"
 #define TR_SDCARD_FULL_EXT              TR_BW_COL(TR_SDCARD_FULL "\036Логи и скриншоты" LCDW_128_LINEBREAK "Откл", TR_SDCARD_FULL "\nЛоги и скриншоты откл")

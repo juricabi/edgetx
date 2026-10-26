@@ -360,6 +360,10 @@
     "led_strip_length": 26,
     "bling_led_strip_start": 6,
     "bling_led_strip_length": 20,
+    "bling_groups": [
+      { "name": "gimbal_right", "first": 0, "count": 10, "start_angle": 190, "direction": -1 },
+      { "name": "gimbal_left", "first": 10, "count": 10, "start_angle": 10, "direction": -1 }
+    ],
     "cfs_led_strip_start": 0,
     "cfs_led_strip_length": 6,
     "cfs_leds_per_switch": 1,
@@ -384,6 +388,12 @@
     "status_led_pwm_timer_irqhandler": "TIM7_IRQHandler"
   },
   "hardware": {
+    "has_aux_serial": true,
+    "has_aux_serial_pwr": true,
+    "has_aux2_serial": true,
+    "has_aux2_serial_pwr": true,
+    "bluetooth": "optional",
+    "has_internal_gps": true,
     "has_ext_module_support": true,
     "has_int_module_support": true,
     "cpu": "STM32H750xB",

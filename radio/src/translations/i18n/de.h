@@ -312,6 +312,14 @@
 #define TR_VTELEMUNIT_28               "us"
 #define TR_VTELEMUNIT_29               "km"
 #define TR_VTELEMUNIT_30               "dBm"
+#define TR_VTELEMUNIT_31               ""
+#define TR_VTELEMUNIT_32               ""
+#define TR_VTELEMUNIT_33               ""
+#define TR_VTELEMUNIT_34               ""
+#define TR_VTELEMUNIT_35               ""
+#define TR_VTELEMUNIT_36               "h"
+#define TR_VTELEMUNIT_37               "min"
+#define TR_VTELEMUNIT_38               "s"
 
 #define TR_VTELEMSCREENTYPE_1          "Kein"
 #define TR_VTELEMSCREENTYPE_2          "Werte"
@@ -541,6 +549,11 @@
 #define TR_BATTERY_RANGE               TR("Akku Bereich", "Akku Spannungsbereich") // Symbol Akku Ladezustand
 #define TR_BATTERYCHARGING             "Lädt..."
 #define TR_BATTERYFULL                 "Akku voll"
+#define TR_CHARGE_DETECTING            "Erkenne..."
+#define TR_CHARGE_TOPPING_OFF          "Restladung..."
+#define TR_CHARGE_NOT_CHARGING         "Lädt nicht"
+#define TR_PRESS_RTN_TO_CLOSE          "RTN drücken zum Schließen"
+#define TR_PRESS_RTN_TO_POWER_OFF      "RTN drücken zum Ausschalten"
 #define TR_BATTERYNONE                 "Keine!"
 #define TR_BATTERYWARNING              TR("Akku Warnung", "Akkuspannungswarnung")
 #define TR_INACTIVITYALARM             TR("Inaktivität", "Inaktivität nach")
@@ -717,6 +730,8 @@
 #define TR_REPEAT_AT_ZERO              "Wiederholrate"
 #define TR_BATT_CALIB                  TR("AkkuSpgwert", "Akku Kalibrierung")
 #define TR_VOLTAGE                     TR("Spg", "Spannungsquelle")  //9XR-Pro
+#define TR_MODULE_SENSOR_VOLTAGE       "Spannung"
+#define TR_MODULE_SENSOR_CURRENT       "Strom"
 #define TR_SELECT_MODEL                "Modell auswählen"
 #define TR_SELECT_MODE                 "Wähle Mode"
 #define TR_CREATE_MODEL                TR("Neues Modell" , "Neues Modell erstellen")
@@ -778,6 +793,8 @@
 #define TR_SPECTRUM_ANALYSER_INT       "Spektrum (INT)"
 #define TR_GHOST_MODULE_CONFIG         "Ghost Konfig."
 #define TR_GPS_MODEL_LOCATOR           "GPS Modell-Finder"
+#define TR_GPS_URI_STANDARD            "Standard"
+#define TR_GPS_URI_APPLE_MAPS          "Apple Maps"
 #define TR_REFRESH                     "Refresh"
 #define TR_SDCARD_FULL                 "SD-Karte voll"
 #define TR_SDCARD_FULL_EXT              TR_BW_COL(TR_SDCARD_FULL "\036Logs und " LCDW_128_LINEBREAK "Screenshots deaktiviert", TR_SDCARD_FULL "\nLogs und Screenshots deaktiviert")

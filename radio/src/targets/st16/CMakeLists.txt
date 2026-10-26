@@ -76,10 +76,6 @@ set(SDRAM ON)
 add_definitions(-DRTCLOCK)
 add_definitions(-DPWR_BUTTON_${PWR_BUTTON})
 
-if(INTERNAL_GPS)
-  add_definitions(-DGPS_USART_BAUDRATE=${INTERNAL_GPS_BAUDRATE})
-endif()
-
 if(STICK_DEAD_ZONE)
   add_definitions(-DSTICK_DEAD_ZONE)
 endif()
@@ -149,7 +145,6 @@ set(CMSIS_SRC ${TARGET_SRC_DIR}/system_clock.c)
 # Firmware board library
 add_library(board OBJECT EXCLUDE_FROM_ALL
   ${BOARD_COMMON_SRC}
-  ${TARGET_SRC_DIR}/led_driver.cpp
   ${TARGET_SRC_DIR}/touch_driver.cpp
   ${TARGET_SRC_DIR}/battery_driver.cpp  
   targets/common/arm/stm32/heartbeat_driver.cpp

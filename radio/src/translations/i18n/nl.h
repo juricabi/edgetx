@@ -309,6 +309,14 @@
 #define TR_VTELEMUNIT_28       "us"
 #define TR_VTELEMUNIT_29       "km"
 #define TR_VTELEMUNIT_30       "dBm"
+#define TR_VTELEMUNIT_31       ""
+#define TR_VTELEMUNIT_32       ""
+#define TR_VTELEMUNIT_33       ""
+#define TR_VTELEMUNIT_34       ""
+#define TR_VTELEMUNIT_35       ""
+#define TR_VTELEMUNIT_36       "h"
+#define TR_VTELEMUNIT_37       "min"
+#define TR_VTELEMUNIT_38       "s"
 
 #define TR_VTELEMSCREENTYPE_1  "Geen"
 #define TR_VTELEMSCREENTYPE_2  "Nums"
@@ -541,6 +549,11 @@
 #define TR_BATTERY_RANGE       TR("Accu Bereik", "Accu Spngs-Bereik") // Symbol Akku Ladezustand
 #define TR_BATTERYCHARGING     "Charging..."
 #define TR_BATTERYFULL         "Battery full"
+#define TR_CHARGE_DETECTING    "Detecteren..."
+#define TR_CHARGE_TOPPING_OFF  "Bijladen..."
+#define TR_CHARGE_NOT_CHARGING "Laadt niet"
+#define TR_PRESS_RTN_TO_CLOSE  "Druk op RTN om te sluiten"
+#define TR_PRESS_RTN_TO_POWER_OFF "Druk op RTN om uit te schakelen"
 #define TR_BATTERYNONE         "None!"
 #define TR_BATTERYWARNING      "Accu laag"
 #define TR_INACTIVITYALARM     TR("Inactiviteit", "Inactiviteit na")
@@ -712,6 +725,8 @@
 #define TR_REPEAT_AT_ZERO      "Herhalen bij 0"
 #define TR_BATT_CALIB          "Accu Calib"
 #define TR_VOLTAGE             TR("Spg", "Spanningsbron")  //9XR-Pro
+#define TR_MODULE_SENSOR_VOLTAGE       "Spanning"
+#define TR_MODULE_SENSOR_CURRENT       "Stroom"
 #define TR_SELECT_MODEL        "Kies Model"
 #define TR_SELECT_MODE         "Select mode"
 #define TR_CREATE_MODEL        "Nieuw Model"
@@ -773,6 +788,8 @@
 #define TR_SPECTRUM_ANALYSER_INT       "Spectrum (INT)"
 #define TR_GHOST_MODULE_CONFIG         "Ghost module config"
 #define TR_GPS_MODEL_LOCATOR           "GPS model locator"
+#define TR_GPS_URI_STANDARD            "Standard"
+#define TR_GPS_URI_APPLE_MAPS          "Apple Maps"
 #define TR_REFRESH                     "Refresh"
 #define TR_SDCARD_FULL                 "SD-Kaart vol"
 #define TR_SDCARD_FULL_EXT              TR_BW_COL(TR_SDCARD_FULL "\036Logs and " LCDW_128_LINEBREAK "Screenshots disabled", TR_SDCARD_FULL "\nLogs and Screenshots disabled")

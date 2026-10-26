@@ -310,6 +310,14 @@
 #define TR_VTELEMUNIT_28               "us"
 #define TR_VTELEMUNIT_29               "km"
 #define TR_VTELEMUNIT_30               "dBm"
+#define TR_VTELEMUNIT_31               ""
+#define TR_VTELEMUNIT_32               ""
+#define TR_VTELEMUNIT_33               ""
+#define TR_VTELEMUNIT_34               ""
+#define TR_VTELEMUNIT_35               ""
+#define TR_VTELEMUNIT_36               "h"
+#define TR_VTELEMUNIT_37               "min"
+#define TR_VTELEMUNIT_38               "s"
 
 #define TR_VTELEMSCREENTYPE_1          "Nic"
 #define TR_VTELEMSCREENTYPE_2          "Hodnota"
@@ -541,6 +549,11 @@
 #define TR_BATTERY_RANGE               TR("Ukazatel bat.", "Ukazatel baterie")
 #define TR_BATTERYCHARGING             "Nabíjení..."
 #define TR_BATTERYFULL                 "Baterie nabitá"
+#define TR_CHARGE_DETECTING            "Zjišťování..."
+#define TR_CHARGE_TOPPING_OFF          "Dobíjení..."
+#define TR_CHARGE_NOT_CHARGING         "Nenabíjí se"
+#define TR_PRESS_RTN_TO_CLOSE          "Stiskni RTN pro zavření"
+#define TR_PRESS_RTN_TO_POWER_OFF      "Stiskni RTN pro vypnutí"
 #define TR_BATTERYNONE                 "Žádná baterie!"
 #define TR_BATTERYWARNING              "Vybitá baterie"
 #define TR_INACTIVITYALARM             TR("Nečinnost", "Nečinnost rádia")
@@ -714,6 +727,8 @@
 #define TR_REPEAT_AT_ZERO              TR("Opak. na nule", "Opakování na nule")
 #define TR_BATT_CALIB                  "Kalib. bat."
 #define TR_VOLTAGE                     "Napětí"
+#define TR_MODULE_SENSOR_VOLTAGE       "Napětí"
+#define TR_MODULE_SENSOR_CURRENT       "Proud"
 #define TR_SELECT_MODEL                "Vyber model"
 #define TR_SELECT_MODE                 "Vybrat mód"
 #define TR_CREATE_MODEL                "Nový model"
@@ -775,6 +790,8 @@
 #define TR_SPECTRUM_ANALYSER_INT       "Spektální an. (INT)"
 #define TR_GHOST_MODULE_CONFIG         "Ghost module config"
 #define TR_GPS_MODEL_LOCATOR           "GPS model locator"
+#define TR_GPS_URI_STANDARD            "Standard"
+#define TR_GPS_URI_APPLE_MAPS          "Apple Maps"
 #define TR_REFRESH                     "Refresh"
 #define TR_SDCARD_FULL                 "Plná karta SD"
 #define TR_SDCARD_FULL_EXT  TR_BW_COL(TR_SDCARD_FULL "\036Logy a " LCDW_128_LINEBREAK " Snímky obrazovky vypnuty", TR_SDCARD_FULL "\nLogování dat a snímky obrazovky vypnuty")

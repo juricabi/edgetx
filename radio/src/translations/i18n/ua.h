@@ -311,6 +311,14 @@
 #define TR_VTELEMUNIT_28               "us"
 #define TR_VTELEMUNIT_29               "km"
 #define TR_VTELEMUNIT_30               "dBm"	/* for untranslated - use english */
+#define TR_VTELEMUNIT_31               ""
+#define TR_VTELEMUNIT_32               ""
+#define TR_VTELEMUNIT_33               ""
+#define TR_VTELEMUNIT_34               ""
+#define TR_VTELEMUNIT_35               ""
+#define TR_VTELEMUNIT_36               "h"
+#define TR_VTELEMUNIT_37               "min"
+#define TR_VTELEMUNIT_38               "s"
 
 #define TR_VTELEMSCREENTYPE_1          "Немає"
 #define TR_VTELEMSCREENTYPE_2          "Цифри"
@@ -541,6 +549,11 @@
 #define TR_BATTERY_RANGE               TR("Діапаз. акум.", "Діапазон акумулятора")
 #define TR_BATTERYCHARGING             "Заряджання..."
 #define TR_BATTERYFULL                 "Batt заряджено"
+#define TR_CHARGE_DETECTING            "Визначення..."
+#define TR_CHARGE_TOPPING_OFF          "Дозаряджання..."
+#define TR_CHARGE_NOT_CHARGING         "Немає заряджання"
+#define TR_PRESS_RTN_TO_CLOSE          "Натисніть RTN, щоб закрити"
+#define TR_PRESS_RTN_TO_POWER_OFF      "Натисніть RTN, щоб вимкнути"
 #define TR_BATTERYNONE                 "Batt відсутня!"
 #define TR_BATTERYWARNING              "Batt розрядж."
 #define TR_INACTIVITYALARM             "Бездіяльність"
@@ -717,6 +730,8 @@
 #define TR_REPEAT_AT_ZERO              "Повтор"
 #define TR_BATT_CALIB                  TR("Калібр.акум", "Калібрування акумулятора")
 #define TR_VOLTAGE                     TR("Напруга", "Джерело напруги")
+#define TR_MODULE_SENSOR_VOLTAGE       "Напруга"
+#define TR_MODULE_SENSOR_CURRENT       "Струм"
 #define TR_SELECT_MODEL                "Оберіть модель"
 #define TR_SELECT_MODE                 "Оберіть режим"
 #define TR_CREATE_MODEL                "Створіть модель"
@@ -778,6 +793,8 @@
 #define TR_SPECTRUM_ANALYSER_INT       "Спектр (INT)"
 #define TR_GHOST_MODULE_CONFIG         "Ghost module config"
 #define TR_GPS_MODEL_LOCATOR           "GPS model locator"
+#define TR_GPS_URI_STANDARD            "Standard"
+#define TR_GPS_URI_APPLE_MAPS          "Apple Maps"
 #define TR_REFRESH                     "Refresh"
 #define TR_SDCARD_FULL                 "SD карта повна"
 #define TR_SDCARD_FULL_EXT              TR_BW_COL(TR_SDCARD_FULL "\036Логи і скріншоти" LCDW_128_LINEBREAK "вимкнені", TR_SDCARD_FULL "\nЛоги і скріншоти вимкнені")

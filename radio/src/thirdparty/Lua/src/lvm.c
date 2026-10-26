@@ -96,7 +96,24 @@ LUAI_FASTCODE int luaV_tointeger (const TValue *obj, lua_Integer *p, int mode) {
  again:
   if (ttisfloat(obj)) {
     lua_Number n = fltvalue(obj);
-    lua_Number f = l_floor(n);
+    lua_Number f;
+    /* StickTime build: a float in the integer range (the case of every lcd.* argument)
+    ** without floor() and without the range checks of lua_numbertointeger: the result is
+    ** the same as below for every float and mode (checked exhaustively on the host). The
+    ** truncation is exact; a float that is not whole has a magnitude below 2^23, so the
+    ** correction by one cannot leave the range. */
+    if (l_mathop(fabs)(n) < -(lua_Number)LUA_MININTEGER) {  /* |n| < 2^31 (false for NaN) */
+      lua_Integer i = (lua_Integer)n;  /* truncates towards zero */
+      f = (lua_Number)i;
+      if (f != n) {  /* not an integral value? */
+        if (mode == 0) return 0;  /* fails if mode demands integral value */
+        if (f > n) i--;  /* negative: the truncation is one above the floor */
+        if (mode > 1) i++;  /* needs ceil? (remember: n != f) */
+      }
+      *p = i;
+      return 1;
+    }
+    f = l_floor(n);  /* NaN, an infinity, -2^31 itself or beyond the integers */
     if (n != f) {  /* not an integral value? */
       if (mode == 0) return 0;  /* fails if mode demands integral value */
       else if (mode > 1)  /* needs ceil? */

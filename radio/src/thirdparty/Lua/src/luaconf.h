@@ -250,7 +250,38 @@
 
 /* The following definitions are good for most cases here */
 
+/*
+** StickTime build: with single-precision floats (LUA_32BITS) l_floor is computed inline
+** instead of calling floorf(). The radios compile for FPv4-SP (no VRINT instructions, no
+** -ffast-math), so floorf() is a newlib call, made for every float that becomes an integer
+** (every float argument of lcd.*, float table keys, 'for' limits, '//'). The result is bit
+** for bit floorf()'s for every float (checked exhaustively on the host, all 2^32 values):
+** below 2^31 in magnitude a float truncates exactly to an int32 and converts back exactly,
+** and a float of magnitude 2^23 or more is already whole; NaN, the infinities and larger
+** magnitudes go to floorf() itself. LUA_FLOOR_LIBM restores the plain floorf() call. The
+** Lua core is C; the firmware's C++ includes lua.h inside extern "C", where <math.h> is
+** best left alone, and never uses l_floor.
+*/
+#if LUA_FLOAT_TYPE == LUA_FLOAT_FLOAT && !defined(LUA_FLOOR_LIBM) && !defined(__cplusplus)
+#include <math.h>
+#if defined(__GNUC__)
+#define LUAI_FLOORINLINE	static inline __attribute__((always_inline))
+#else
+#define LUAI_FLOORINLINE	static inline
+#endif
+LUAI_FLOORINLINE float luai_floorf (float x) {
+  if (fabsf(x) < 2147483648.0f) {  /* |x| < 2^31 (false for NaN too) */
+    int32_t i = (int32_t)x;  /* truncates towards zero */
+    float f = (float)i;  /* exact: a whole x converts back to itself, else |x| < 2^23 */
+    if (f > x) return f - 1.0f;  /* negative and not whole: one below the truncation */
+    return (f < x) ? f : x;  /* 'x' when whole: keeps the sign of a zero (floorf(-0.0) is -0.0) */
+  }
+  return floorf(x);
+}
+#define l_floor(x)		(luai_floorf(x))
+#else
 #define l_floor(x)		(l_mathop(floor)(x))
+#endif
 
 #define lua_number2str(s,sz,n)  \
 	l_sprintf((s), sz, LUA_NUMBER_FMT, (LUAI_UACNUMBER)(n))

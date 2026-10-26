@@ -83,6 +83,17 @@ class TimerWidget : public Widget
     lv_obj_set_pos(digits0, D0_X, D0_Y);
     digits1 = createDigitsLabel();
     lv_obj_set_pos(digits1, D1_X, D1_Y);
+    minusLabel = etx_label_create(lvobj, FONT_XL_INDEX);
+    lv_label_set_text(minusLabel, "-");
+    etx_txt_color(minusLabel, COLOR_THEME_SECONDARY1_INDEX);
+    etx_txt_color(minusLabel, COLOR_THEME_SECONDARY2_INDEX,
+                  LV_PART_MAIN | ETX_NAME_TXT_WARNING);
+    // Left of digits0. Not with lv_obj_align_to(): it updates the whole
+    // screen's layout, and delayedInit() runs while LVGL draws the screen,
+    // which drops the redraw of everything that moves (a stale band through
+    // other widgets' text until they change)
+    lv_obj_set_pos(minusLabel, D0_X - getTextWidth("-", 1, FONT(XL)), D0_Y);
+    lv_obj_add_flag(minusLabel, LV_OBJ_FLAG_HIDDEN);
 
     timerArc = lv_arc_create(lvobj);
     lv_arc_set_rotation(timerArc, 270);
@@ -145,6 +156,11 @@ class TimerWidget : public Widget
         lv_label_set_text(unit0, sUnit0);
         lv_label_set_text(unit1, sUnit1);
 
+        if (val < 0)
+          lv_obj_clear_flag(minusLabel, LV_OBJ_FLAG_HIDDEN);
+        else
+          lv_obj_add_flag(minusLabel, LV_OBJ_FLAG_HIDDEN);
+
         if (lastValue > 0 && lastStartValue > 0) {
           lv_obj_clear_flag(timerArc, LV_OBJ_FLAG_HIDDEN);
           timerIcon->hide();
@@ -157,7 +173,7 @@ class TimerWidget : public Widget
 
         TimerOptions timerOptions;
         timerOptions.options = (abs(val) >= 3600) ? SHOW_TIME : SHOW_TIMER;
-        getTimerString(str, abs(val), timerOptions);
+        getTimerString(str, val, timerOptions);
         lv_label_set_text(valLabel, str);
 
         if (width() <= SMALL_TXT_MAX_W && height() <= SMALL_TXT_MAX_H && abs(val) >= 3600)
@@ -168,15 +184,20 @@ class TimerWidget : public Widget
         lv_obj_add_flag(timerArc, LV_OBJ_FLAG_HIDDEN);
         timerIcon->hide();
       }
+    }
 
-      // Set colors if timer has elapsed.
-      if (lastValue < 0 && lastValue % 2) {
+    // Set colors if timer has elapsed.
+    bool warning = (lastValue < 0) && BLINK_ON_PHASE;
+    if (warning != lastWarning) {
+      lastWarning = warning;
+      if (warning) {
         if (isLarge) {
           lv_obj_add_state(nameLabel, ETX_NAME_TXT_WARNING);
           lv_obj_add_state(digits0, ETX_NAME_TXT_WARNING);
           lv_obj_add_state(digits1, ETX_NAME_TXT_WARNING);
           lv_obj_add_state(unit0, ETX_NAME_TXT_WARNING);
           lv_obj_add_state(unit1, ETX_NAME_TXT_WARNING);
+          lv_obj_add_state(minusLabel, ETX_NAME_TXT_WARNING);
           lv_obj_clear_state(lvobj, ETX_STATE_BG_WARNING);
           timerBg->setColor(COLOR_THEME_WARNING_INDEX);
           timerIcon->setColor(COLOR_THEME_SECONDARY2_INDEX);
@@ -190,6 +211,7 @@ class TimerWidget : public Widget
           lv_obj_clear_state(digits1, ETX_NAME_TXT_WARNING);
           lv_obj_clear_state(unit0, ETX_NAME_TXT_WARNING);
           lv_obj_clear_state(unit1, ETX_NAME_TXT_WARNING);
+          lv_obj_clear_state(minusLabel, ETX_NAME_TXT_WARNING);
           timerBg->setColor(COLOR_THEME_PRIMARY2_INDEX);
           timerIcon->setColor(COLOR_THEME_SECONDARY1_INDEX);
         }
@@ -222,6 +244,7 @@ class TimerWidget : public Widget
  protected:
   tmrval_t lastValue = 0;
   uint32_t lastStartValue = -1;
+  int8_t lastWarning = -1;
   bool isLarge = false;
   lv_style_t style;
   lv_obj_t* nameLabel = nullptr;
@@ -230,6 +253,7 @@ class TimerWidget : public Widget
   lv_obj_t* digits1 = nullptr;
   lv_obj_t* unit0 = nullptr;
   lv_obj_t* unit1 = nullptr;
+  lv_obj_t* minusLabel = nullptr;
   lv_obj_t* timerArc = nullptr;
   StaticIcon* timerBg = nullptr;
   StaticIcon* timerIcon = nullptr;
@@ -247,6 +271,10 @@ class TimerWidget : public Widget
     TimerData& timerData = g_model.timers[index];
 
     bool hasName = ZLEN(timerData.name) > 0;
+
+    // Force value and color refresh
+    lastStartValue = -1;
+    lastWarning = -1;
 
     if (width() >= TMR_LRG_W && height() >= TMR_LRG_H) {
       isLarge = true;
@@ -275,6 +303,7 @@ class TimerWidget : public Widget
       lv_obj_add_flag(digits1, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(unit0, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(unit1, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(minusLabel, LV_OBJ_FLAG_HIDDEN);
       timerBg->hide();
     }
 

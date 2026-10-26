@@ -311,6 +311,14 @@
 #define TR_VTELEMUNIT_28               "us"
 #define TR_VTELEMUNIT_29               "km"
 #define TR_VTELEMUNIT_30               "dBm"
+#define TR_VTELEMUNIT_31               ""
+#define TR_VTELEMUNIT_32               ""
+#define TR_VTELEMUNIT_33               ""
+#define TR_VTELEMUNIT_34               ""
+#define TR_VTELEMUNIT_35               ""
+#define TR_VTELEMUNIT_36               "h"
+#define TR_VTELEMUNIT_37               "min"
+#define TR_VTELEMUNIT_38               "s"
 
 #define TR_VTELEMSCREENTYPE_1          "Ingen"
 #define TR_VTELEMSCREENTYPE_2          "Tal"
@@ -544,6 +552,11 @@
 #define TR_BATTERY_RANGE               TR("Bat. interval", "Batteri spændings interval")
 #define TR_BATTERYCHARGING             "Lader..."
 #define TR_BATTERYFULL                 "Fuldt batteri"
+#define TR_CHARGE_DETECTING            "Registrerer..."
+#define TR_CHARGE_TOPPING_OFF          "Topladning..."
+#define TR_CHARGE_NOT_CHARGING         "Lader ikke"
+#define TR_PRESS_RTN_TO_CLOSE          "Tryk RTN for at lukke"
+#define TR_PRESS_RTN_TO_POWER_OFF      "Tryk RTN for at slukke"
 #define TR_BATTERYNONE                 "Intet!"
 #define TR_BATTERYWARNING              "Lavt batteri"
 #define TR_INACTIVITYALARM             "Inaktiv"
@@ -721,6 +734,8 @@
 #define TR_REPEAT_AT_ZERO              "Gentag nul"
 #define TR_BATT_CALIB                  TR("Bat. kalib", "Batteri kalibering")
 #define TR_VOLTAGE                     TR("Spænding", "Spænding kilde")
+#define TR_MODULE_SENSOR_VOLTAGE       "Spænding"
+#define TR_MODULE_SENSOR_CURRENT       "Strøm"
 #define TR_SELECT_MODEL                "Vælg model"
 #define TR_SELECT_MODE                 "Vælg tilstand"
 #define TR_CREATE_MODEL                "Opret model"
@@ -782,6 +797,8 @@
 #define TR_SPECTRUM_ANALYSER_INT       "Spectrum (INT)"
 #define TR_GHOST_MODULE_CONFIG         "Ghost module config"
 #define TR_GPS_MODEL_LOCATOR           "GPS model locator"
+#define TR_GPS_URI_STANDARD            "Standard"
+#define TR_GPS_URI_APPLE_MAPS          "Apple Maps"
 #define TR_REFRESH                     "Refresh"
 #define TR_SDCARD_FULL                 "SD kort fuldt"
 #define   TR_SDCARD_FULL_EXT            TR_BW_COL(TR_SDCARD_FULL "\036Log & skærmklip" LCDW_128_LINEBREAK "deaktiveret", TR_SDCARD_FULL "\nLog & skærmklip deaktiveret")
