@@ -507,31 +507,96 @@ BMP_FASTCODE void BitmapBuffer::drawFilledTriangle(coord_t x0, coord_t y0, coord
     return;
   }
 
+  if (opacity == OPACITY_MAX) return;  // every row's drawHorizontalLine() would return
+
   coord_t dx01 = x1 - x0, dy01 = y1 - y0, dx02 = x2 - x0, dy02 = y2 - y0,
           dx12 = x2 - x1, dy12 = y2 - y1;
-  coord_t sa = 0, sb = 0;
   coord_t last = (y1 == y2) ? y1 : y1 - 1;
-  coord_t y;
 
-  for (y = y0; y <= last; y++) {
-    a = x0 + sa / dy01;
-    b = x0 + sb / dy02;
-    sa += dx01;
-    sb += dx02;
-    if (a > b) SWAP(a, b);
-    drawHorizontalLine(a, y, b - a + 1, SOLID, flags, opacity);
-  }
+  // Only the rows drawHorizontalLine() would keep are walked: those with y + offsetY in
+  // [ymin, ymax). The original filler steps every row from y0 to y2, summing dx per row;
+  // the sum after k rows is k * dx (the same value mod 2^32 when it overflows), so a
+  // segment can start at its first visible row. A triangle near the camera in StickTime
+  // reaches thousands of rows past the screen.
+  const coord_t yfirst = ymin - offsetY;
+  const coord_t ylast = ymax - 1 - offsetY;
 
-  sa = dx12 * (y - y1);
-  sb = dx02 * (y - y0);
+  // Solid, opaque rows of a Lua tool (fastDraw, no draw context) go straight into the
+  // pixels: this is drawHorizontalLine -> applyClippingRect -> drawHorizontalLineAbs ->
+  // fastFill, written out once instead of called four times per row. The members are
+  // copied to locals so the pixel stores (may_alias) do not force reloads every row.
+  typedef uint32_t __attribute__((may_alias)) pixel_pair_t;
+  const bool direct = fastDraw && !draw_ctx && opacity == 0 && data;
+  const pixel_t color = COLOR_VAL(flags);
+  const pixel_pair_t pair = color | ((uint32_t)color << 16);
+  const coord_t xmin = this->xmin, xmax = this->xmax, offsetX = this->offsetX,
+                offsetY = this->offsetY, width = this->_width;
+  pixel_t* const lo = data;
+  pixel_t* const hi = data_end;
+  bool synced = false;  // DMAWaitAndSyncCache() once, before the first pixel store
 
-  for (; y <= y2; y++) {
-    a = x1 + sa / dy12;
-    b = x0 + sb / dy02;
-    sa += dx12;
-    sb += dx02;
-    if (a > b) SWAP(a, b);
-    drawHorizontalLine(a, y, b - a + 1, SOLID, flags, opacity);
+  // segment 0: rows y0..last along edges 0-1 and 0-2; segment 1: rows y1..y2 along
+  // edges 1-2 and 0-2 (only when y1 < y2, as in the original)
+  coord_t xa = x0, dxa = dx01, dya = dy01, ys = y0, ye = last;
+  for (int seg = 0; seg < 2; seg++) {
+    if (seg == 1) {
+      if (y1 == y2) break;
+      xa = x1; dxa = dx12; dya = dy12; ys = y1; ye = y2;
+    }
+    coord_t y = ys < yfirst ? yfirst : ys;
+    const coord_t yend = ye > ylast ? ylast : ye;
+    if (y > yend) continue;
+    // the sums the original loop would hold at row y (two's complement, no UB)
+    const uint32_t rows = (uint32_t)y - (uint32_t)ys;
+    coord_t sa = (coord_t)((uint32_t)dxa * rows);
+    coord_t sb = (coord_t)((uint32_t)dx02 * ((uint32_t)y - (uint32_t)y0));
+    for (; y <= yend; y++) {
+      a = xa + sa / dya;
+      b = x0 + sb / dy02;
+      sa += dxa;
+      sb += dx02;
+      if (a > b) SWAP(a, b);
+      if (!direct) {
+        drawHorizontalLine(a, y, b - a + 1, SOLID, flags, opacity);
+        continue;
+      }
+      // drawHorizontalLine(a, y, b - a + 1, SOLID, flags, 0), whose width and x it got
+      // as wrapped two's complement values if the sums overflowed (unsigned here so the
+      // compiler cannot drop the w < 0 case from a <= b)
+      coord_t x = (coord_t)((uint32_t)a + (uint32_t)offsetX);  // APPLY_OFFSET
+      coord_t w = (coord_t)((uint32_t)b - (uint32_t)a + 1u);
+      // applyClippingRect(x, y, w, 1); y + offsetY is inside [ymin, ymax) already
+      if (w < 0) {
+        x += w;
+        w = -w;
+      }
+      if (x >= xmax) continue;
+      if (x < xmin) {
+        w += x - xmin;
+        x = xmin;
+      }
+      if (x + w > xmax) w = xmax - x;
+      if (w <= 0) continue;
+      // drawHorizontalLineAbs -> fastFill(x, y + offsetY, w, 1, color)
+      if (w >= FAST_FILL_DMA_PIXELS) {  // its DMA2D case: let fastFill decide
+        fastFill(x, y + offsetY, w, 1, color);
+        continue;
+      }
+      if (!synced) {
+        DMAWaitAndSyncCache();
+        synced = true;
+      }
+      pixel_t* p = &lo[(y + offsetY) * width + x];  // getPixelPtrAbs()
+      if (p < lo || p + w > hi) continue;
+      coord_t n = w;
+      if ((uintptr_t)p & 2) {
+        *p++ = color;
+        n--;
+      }
+      pixel_pair_t* q = (pixel_pair_t*)p;
+      for (; n >= 2; n -= 2) *q++ = pair;
+      if (n) *(pixel_t*)q = color;
+    }
   }
 }
 
