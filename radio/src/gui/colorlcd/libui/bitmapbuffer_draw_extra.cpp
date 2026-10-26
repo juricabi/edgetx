@@ -365,6 +365,43 @@ BMP_FASTCODE void BitmapBuffer::drawLine(coord_t x1, coord_t y1, coord_t x2, coo
 
   DMAWaitAndSyncCache();
 
+  if (pat == SOLID) {
+    // Solid line: every pixel of it lies in the box [x1..x2] x [y1..y2]. When that box
+    // is inside the buffer, the per-pixel pointer check below passes for every pixel and
+    // the pattern test is always true, so the line is drawn by stepping a pointer: one
+    // store, one or two adds per pixel. (The clipper clips to xmax/ymax inclusive, so a
+    // corner can sit at x == _width or y == _height; the address it gets is the one
+    // getPixelPtrAbs() gives, as before, and a box past data_end takes the loop below.)
+    const coord_t bx0 = x1 < x2 ? x1 : x2, bx1 = x1 < x2 ? x2 : x1;
+    const coord_t by0 = y1 < y2 ? y1 : y2, by1 = y1 < y2 ? y2 : y1;
+    if (bx0 >= 0 && by0 >= 0 && getPixelPtrAbs(bx1, by1) < data_end) {
+      pixel_t* p = getPixelPtrAbs(px, py);
+      const int ystep = sdy * _width;
+      if (dxabs >= dyabs) {
+        for (int i = dxabs; i >= 0; i--) {
+          *p = color;
+          y += dyabs;
+          if (y >= dxabs) {
+            y -= dxabs;
+            p += ystep;
+          }
+          p += sdx;
+        }
+      } else {
+        for (int i = dyabs; i >= 0; i--) {
+          *p = color;
+          x += dxabs;
+          if (x >= dyabs) {
+            x -= dyabs;
+            p += sdx;
+          }
+          p += ystep;
+        }
+      }
+      return;
+    }
+  }
+
   // the clipper keeps the line inside the buffer; the pointer check is a safety net
   pixel_t* const lo = data;
   pixel_t* const hi = data_end;
