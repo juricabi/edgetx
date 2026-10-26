@@ -106,16 +106,15 @@ LUAI_FASTCODE static int math_floor (lua_State *L) {
     lua_settop(L, 1);  /* integer is its own floor */
   else {
     lua_Number d = luaL_checknumber(L, 1);
-#if defined(LUA_FAST_CODE_ITCM)
-    /* StickTime build: the common case without a call to floor() */
+    /* StickTime build: the common case without a call to floor(), on every radio (the result
+    ** is the same as below for every float: checked exhaustively on the host) */
     if (d > (lua_Number)LUA_MININTEGER && d < -(lua_Number)LUA_MININTEGER) {
       lua_Integer n = (lua_Integer)d;  /* truncates towards zero */
       if ((lua_Number)n > d) n--;  /* negative and not whole */
       lua_pushinteger(L, n);
       return 1;
     }
-#endif
-    pushnumint(L, l_mathop(floor)(d));
+    pushnumint(L, l_floor(d));
   }
   return 1;
 }
