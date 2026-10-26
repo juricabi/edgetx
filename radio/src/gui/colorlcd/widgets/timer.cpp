@@ -88,7 +88,11 @@ class TimerWidget : public Widget
     etx_txt_color(minusLabel, COLOR_THEME_SECONDARY1_INDEX);
     etx_txt_color(minusLabel, COLOR_THEME_SECONDARY2_INDEX,
                   LV_PART_MAIN | ETX_NAME_TXT_WARNING);
-    lv_obj_align_to(minusLabel, digits0, LV_ALIGN_OUT_LEFT_TOP, 0, 0);
+    // Left of digits0. Not with lv_obj_align_to(): it updates the whole
+    // screen's layout, and delayedInit() runs while LVGL draws the screen,
+    // which drops the redraw of everything that moves (a stale band through
+    // other widgets' text until they change)
+    lv_obj_set_pos(minusLabel, D0_X - getTextWidth("-", 1, FONT(XL)), D0_Y);
     lv_obj_add_flag(minusLabel, LV_OBJ_FLAG_HIDDEN);
 
     timerArc = lv_arc_create(lvobj);
