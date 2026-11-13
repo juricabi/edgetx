@@ -22,11 +22,17 @@
 #include "hal/adc_driver.h"
 #include "hal/adc_driver.h"
 #include "hal/switch_driver.h"
+#include "hal/usb_driver.h"
 #include "hal/module_port.h"
 
 #include "edgetx.h"
 #include "mixer_scheduler.h"
 #include "switches.h"
+
+#if defined(AFHDS3)
+#include "pulses/afhds3.h"
+#include "pulses/afhds3_config.h"
+#endif
 
 #if defined(USBJ_EX)
 #include "usb_joystick.h"
@@ -103,6 +109,7 @@ enum MenuModelSetupItems {
 #endif
   ITEM_MODEL_SETUP_BEEP_CENTER,
   ITEM_MODEL_SETUP_USE_JITTER_FILTER,
+  ITEM_MODEL_SETUP_USB_MODE,
 #if defined(PXX2)
   ITEM_MODEL_SETUP_REGISTRATION_ID,
 #endif
@@ -138,7 +145,6 @@ enum MenuModelSetupItems {
 #if defined(AFHDS3)
   ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_MODE,
   ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_STATUS,
-  ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_POWER_STATUS,
 #endif
 #if defined(DSMP)
   ITEM_MODEL_SETUP_EXTERNAL_MODULE_DSMP_STATUS,
@@ -150,13 +156,10 @@ enum MenuModelSetupItems {
   ITEM_MODEL_SETUP_EXTERNAL_MODULE_OPTIONS,
 #if defined(MULTIMODULE)
   ITEM_MODEL_SETUP_EXTERNAL_MODULE_AUTOBIND,
-#if defined(MANUFACTURER_FRSKY)
   ITEM_MODEL_SETUP_EXTERNAL_MODULE_DISABLE_TELEM,
-#endif
   ITEM_MODEL_SETUP_EXTERNAL_MODULE_DISABLE_MAPPING,
 #endif
 #if defined(AFHDS3)
-  ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_RX_FREQ,
   ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_ACTUAL_POWER,
 #endif
   ITEM_MODEL_SETUP_EXTERNAL_MODULE_POWER,
@@ -540,6 +543,7 @@ void menuModelSetup(event_t event)
     uint8_t(NAVIGATION_LINE_BY_LINE | (adcGetInputOffset(ADC_INPUT_FLEX + 1) - 1)), // ITEM_MODEL_SETUP_BEEP_CENTER
 
     0, // ITEM_MODEL_SETUP_USE_JITTER_FILTER
+    0, // ITEM_MODEL_SETUP_USB_MODE
 
     REGISTRATION_ID_ROWS  // ITEM_MODEL_SETUP_REGISTRATION_ID
 
@@ -565,14 +569,14 @@ void menuModelSetup(event_t event)
       MULTIMODULE_TYPE_ROW(EXTERNAL_MODULE)             // ITEM_MODEL_SETUP_EXTERNAL_MODULE_PROTOCOL
       MULTIMODULE_DSM_CLONED_RAW(EXTERNAL_MODULE),      // ITEM_MODEL_SETUP_EXTERNAL_MODULE_DSM_CLONED
       MULTIMODULE_STATUS_ROWS(EXTERNAL_MODULE)          // ITEM_MODEL_SETUP_EXTERNAL_MODULE_STATUS + ITEM_MODEL_SETUP_EXTERNAL_MODULE_SYNCSTATUS
-      DSMP_STATUS_ROWS(EXTERNAL_MODULE)                 // ITEM_MODEL_SETUP_EXTERNAL_MODULE_DSMP_STATUS
-      AFHDS3_MODE_ROWS(EXTERNAL_MODULE)                 // ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_MODE + ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_STATUS + ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_POWER_STATUS
+      AFHDS3_MODE_ROWS(EXTERNAL_MODULE)                 // ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_MODE + ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_STATUS
+      DSMP_STATUS_ROWS(EXTERNAL_MODULE)                 // ITEM_MODEL_SETUP_EXTERNAL_MODULE_DSMP_STATUS + ITEM_MODEL_SETUP_EXTERNAL_MODULE_DSMP_ENABLE_AETR
       MODULE_CHANNELS_ROWS(EXTERNAL_MODULE),            // ITEM_MODEL_SETUP_EXTERNAL_MODULE_CHANNELS
       IF_NOT_ACCESS_MODULE_RF(EXTERNAL_MODULE, MODULE_BIND_ROWS(EXTERNAL_MODULE)),    // ITEM_MODEL_SETUP_EXTERNAL_MODULE_NOT_ACCESS_RXNUM_BIND_RANGE
       IF_ACCESS_MODULE_RF(EXTERNAL_MODULE, 0),          // ITEM_MODEL_SETUP_EXTERNAL_MODULE_PXX2_MODEL_NUM
       IF_NOT_PXX2_MODULE(EXTERNAL_MODULE, MODULE_OPTION_ROW(EXTERNAL_MODULE)),    // ITEM_MODEL_SETUP_EXTERNAL_MODULE_OPTIONS
       MULTIMODULE_MODULE_ROWS(EXTERNAL_MODULE)          // ITEM_MODEL_SETUP_EXTERNAL_MODULE_AUTOBIND + (ITEM_MODEL_SETUP_EXTERNAL_MODULE_DISABLE_TELEM) + ITEM_MODEL_SETUP_EXTERNAL_MODULE_DISABLE_MAPPING
-      AFHDS3_MODULE_ROWS(EXTERNAL_MODULE)               // ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_RX_FREQ + ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_ACTUAL_POWER
+      AFHDS3_MODULE_ROWS(EXTERNAL_MODULE)               // ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_ACTUAL_POWER
       MODULE_POWER_ROW(EXTERNAL_MODULE),                // ITEM_MODEL_SETUP_EXTERNAL_MODULE_POWER
       FAILSAFE_ROW(EXTERNAL_MODULE),                    // ITEM_MODEL_SETUP_EXTERNAL_MODULE_FAILSAFE
       IF_ACCESS_MODULE_RF(EXTERNAL_MODULE, 1),          // ITEM_MODEL_SETUP_EXTERNAL_MODULE_PXX2_REGISTER_RANGE
@@ -1029,6 +1033,10 @@ void menuModelSetup(event_t event)
 
       case ITEM_MODEL_SETUP_USE_JITTER_FILTER:
         g_model.jitterFilter = editChoice(MODEL_SETUP_2ND_COLUMN, y, STR_JITTER_FILTER, STR_ADCFILTERVALUES, g_model.jitterFilter, 0, 2, attr, event);
+        break;
+
+      case ITEM_MODEL_SETUP_USB_MODE:
+        g_model.usbMode = editChoice(MODEL_SETUP_2ND_COLUMN, y, STR_USBMODE, STR_MODEL_USBMODES, g_model.usbMode, USBMODE_GLOBAL, USB_MAX_MODE + 1, attr, event);
         break;
 
       case ITEM_MODEL_SETUP_INTERNAL_MODULE_LABEL:
@@ -1786,9 +1794,13 @@ void menuModelSetup(event_t event)
 #if defined(AFHDS3)
       else if (isModuleAFHDS3(EXTERNAL_MODULE)) {
         lcdDrawTextIndented(y, STR_RF_POWER);
-        lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN, y, STR_AFHDS3_POWERS, g_model.moduleData[EXTERNAL_MODULE].afhds3.runPower, LEFT | attr);
-        if (attr)
-          CHECK_INCDEC_MODELVAR(event, g_model.moduleData[EXTERNAL_MODULE].afhds3.runPower, afhds3::RUN_POWER::RUN_POWER_FIRST, afhds3::RUN_POWER::RUN_POWER_LAST);
+        lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN, y, STR_AFHDS3_POWERS, g_model.moduleData[EXTERNAL_MODULE].afhds3.rfPower, LEFT | attr);
+        if (attr) {
+          CHECK_INCDEC_MODELVAR_ZERO(event, g_model.moduleData[EXTERNAL_MODULE].afhds3.rfPower, AFHDS3_FRM303_POWER_MAX);
+          if (checkIncDec_Ret) {
+            DIRTY_CMD(afhds3::getConfig(EXTERNAL_MODULE), afhds3::DirtyConfig::DC_RX_CMD_TX_PWR);
+          }
+        }
       }
 #endif
       break;
@@ -1812,29 +1824,18 @@ void menuModelSetup(event_t event)
         g_model.moduleData[EXTERNAL_MODULE].multi.autoBindMode = editCheckBox(g_model.moduleData[EXTERNAL_MODULE].multi.autoBindMode, MODEL_SETUP_2ND_COLUMN, y, STR_MULTI_AUTOBIND, attr, event, INDENT_WIDTH);
       }
       break;
-#if defined(MANUFACTURER_FRSKY)
     case ITEM_MODEL_SETUP_EXTERNAL_MODULE_DISABLE_TELEM:
       g_model.moduleData[EXTERNAL_MODULE].multi.disableTelemetry = editCheckBox(g_model.moduleData[EXTERNAL_MODULE].multi.disableTelemetry, MODEL_SETUP_2ND_COLUMN, y, STR_DISABLE_TELEM, attr, event, INDENT_WIDTH);
       break;
-#endif
     case ITEM_MODEL_SETUP_EXTERNAL_MODULE_DISABLE_MAPPING:
       g_model.moduleData[EXTERNAL_MODULE].multi.disableMapping = editCheckBox(g_model.moduleData[EXTERNAL_MODULE].multi.disableMapping, MODEL_SETUP_2ND_COLUMN, y, STR_DISABLE_CH_MAP, attr, event, INDENT_WIDTH);
       break;
 #endif
 
 #if defined(AFHDS3)
-      case ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_RX_FREQ:
-        lcdDrawTextIndented(y, STR_AFHDS3_RX_FREQ);
-        lcdDrawNumber(MODEL_SETUP_2ND_COLUMN, y, g_model.moduleData[EXTERNAL_MODULE].afhds3.rxFreq(), attr | LEFT);
-        if (attr) {
-          uint16_t rxFreq = g_model.moduleData[EXTERNAL_MODULE].afhds3.rxFreq();
-          CHECK_INCDEC_MODELVAR(event, rxFreq, MIN_FREQ, MAX_FREQ);
-          g_model.moduleData[EXTERNAL_MODULE].afhds3.setRxFreq(rxFreq);
-        }
-        break;
       case ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_ACTUAL_POWER:
         lcdDrawTextIndented(y, STR_AFHDS3_ACTUAL_POWER);
-        lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN, y, STR_AFHDS3_POWERS, actualAfhdsRunPower(EXTERNAL_MODULE), LEFT);
+        lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN, y, STR_AFHDS3_POWERS, afhds3::get_current_rfpower_level(EXTERNAL_MODULE), LEFT);
         break;
 #endif
 
@@ -1880,14 +1881,6 @@ void menuModelSetup(event_t event)
       lcdDrawText(MODEL_SETUP_2ND_COLUMN, y,
           g_model.moduleData[EXTERNAL_MODULE].afhds3.telemetry ? STR_AFHDS3_ONE_TO_ONE_TELEMETRY : STR_AFHDS3_ONE_TO_MANY);
       break;
-    case ITEM_MODEL_SETUP_EXTERNAL_MODULE_AFHDS3_POWER_STATUS:
-    {
-      lcdDrawTextIndented(y, STR_AFHDS3_POWER_SOURCE);
-      char statusText[64];
-      getModuleSyncStatusString(EXTERNAL_MODULE, statusText);
-      lcdDrawText(MODEL_SETUP_2ND_COLUMN, y, statusText);
-      break;
-    }
 #endif
 
 

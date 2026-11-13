@@ -9,6 +9,7 @@ on:
       - v*
     paths: &trigger-paths
       - '.github/workflows/build_fw.yml'
+      - '.github/actions/fetch_deps/**'
       - 'cmake/**'
       - 'radio/**'
       - 'tools/build-gh.sh'
@@ -44,7 +45,7 @@ jobs:
           - t20;t20v2 # Jumper
           - t22 # Jumper
           - gx12;mt12 # RadioMaster
-          - tx15 # RadioMaster
+          - gx10;tx15 # RadioMaster
           - tx16s;tx16smk3 # RadioMaster
           - h17 # Senduwing
           - t18h7 # Jumper
@@ -57,6 +58,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           submodules: recursive
+
+      - name: Fetch build dependencies
+        uses: ./.github/actions/fetch_deps
 
       - name: Test ${{ matrix.target }}
         env:
@@ -90,7 +94,7 @@ jobs:
           - t15;t15h7;t15pro;t16 # Jumper
           - t18;t20;t20v2 # Jumper
           - t22;tpros;tprov2 # Jumper
-          - boxer;gx12;gx15 # RadioMaster
+          - boxer;gx10;gx12;gx15 # RadioMaster
           - mt12;pocket;tx12mk2 # RadioMaster
           - tx15;tx16s;tx16smk3 # RadioMaster
           - zorro # RadioMaster
@@ -105,6 +109,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           submodules: recursive
+
+      - name: Fetch build dependencies
+        uses: ./.github/actions/fetch_deps
 
       - name: Build ${{ matrix.target }}
         env:

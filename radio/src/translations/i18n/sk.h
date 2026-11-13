@@ -150,11 +150,12 @@
 #define TR_AUX_SERIAL_MODES_9          "Ladenie"
 #define TR_AUX_SERIAL_MODES_10         "SpaceMouse"
 #define TR_AUX_SERIAL_MODES_11         "Externý modul"
+#define TR_GLOBAL                      "Globálny"
 #define TR_SWTYPES_1                   "Žiadny"
 #define TR_SWTYPES_2                   "Bez aretácie"
 #define TR_SWTYPES_3                   "2-polohový"
 #define TR_SWTYPES_4                   "3-polohový"
-#define TR_SWTYPES_5                   "Globálny"
+#define TR_SWTYPES_5                   TR_GLOBAL
 #define TR_POTTYPES_1                  "Žiadny"
 #define TR_POTTYPES_2                  TR("Pot","Potenciometer")
 #define TR_POTTYPES_3                  TR("Pot s aret.","Pot s aretáciou")
@@ -173,6 +174,11 @@
 #define TR_USBMODES_2                  TR("Joyst","Joystick")
 #define TR_USBMODES_3                  TR("SDkarta","Úložisko")
 #define TR_USBMODES_4                  "Serial"
+#define TR_MODEL_USBMODES_1            TR_GLOBAL
+#define TR_MODEL_USBMODES_2            TR_USBMODES_1
+#define TR_MODEL_USBMODES_3            TR_USBMODES_2
+#define TR_MODEL_USBMODES_4            TR_USBMODES_3
+#define TR_MODEL_USBMODES_5            TR_USBMODES_4
 #define TR_JACK_MODES_1                "Spýtať"
 #define TR_JACK_MODES_2                "Audio"
 #define TR_JACK_MODES_3                "Trenér"
@@ -374,6 +380,7 @@
 
 #define TR_IMU_VSRCRAW_1               "TltX"
 #define TR_IMU_VSRCRAW_2               "TltY"
+#define TR_IMU_VSRCRAW_3               "Accl"
 
 #define TR_CYC_VSRCRAW_1               "CYC1"
 #define TR_CYC_VSRCRAW_2               "CYC2"
@@ -568,6 +575,9 @@
 #define TR_TRAINER_SHUTDOWN_ALARM      TR("Tréner vypnutý", "Kontrola trénera pri vypnutí")
 #define TR_MODEL_STILL_POWERED         "Model stále spustený"
 #define TR_TRAINER_STILL_CONNECTED     "Tréner stále pripojený"
+#define TR_TRAINER_JACK_MODE           "Trainer lead"
+#define TR_TRAINER_JACK_MODES_1        "Crossover"
+#define TR_TRAINER_JACK_MODES_2        "Standard"
 #define TR_USB_STILL_CONNECTED         "USB stále pripojené"
 #define TR_MODEL_SHUTDOWN              "Vypnúť?"
 #define TR_PRESS_ENTER_TO_CONFIRM      "Stlač ENTER pre potvrdenie"
@@ -1056,11 +1066,9 @@
 #define TR_UNIT                        "Jednotky"
 #define TR_TELEMETRY_NEWSENSOR         "Pridať senzor ručne"
 #define TR_CHANNELRANGE                TR("Kanály", "Rozsah kanálov")
-#define TR_AFHDS3_RX_FREQ              TR("RX frek.", "RX frekvencia")
 #define TR_AFHDS3_ONE_TO_ONE_TELEMETRY TR("Unicast/Tel.", "Unicast/Telemetria")
 #define TR_AFHDS3_ONE_TO_MANY          "Multicast"
 #define TR_AFHDS3_ACTUAL_POWER         TR("Act. pow", "Aktuálny výkon")
-#define TR_AFHDS3_POWER_SOURCE         TR("Zdroj nap.", "Zdroj napájania")
 #define TR_IBUS2_SENSORS_MODE_ONLY     "Only in the iBUS2 mode can the sensors be set."
 #define TR_ANTENNACONFIRM1             "Skutočne prepnúť?"
 #define TR_ANTENNA_MODES_1           "Interný"

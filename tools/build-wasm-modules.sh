@@ -33,7 +33,7 @@ else
   COMMON_OPTIONS="-DCMAKE_RULE_MESSAGES=OFF"
 fi
 
-COMMON_OPTIONS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_MESSAGE_LOG_LEVEL=WARNING -Wno-dev"
+COMMON_OPTIONS+=" -DCMAKE_BUILD_TYPE=Release -DCMAKE_MESSAGE_LOG_LEVEL=WARNING ${CMAKE_NO_AUTHOR_WARNINGS}"
 COMMON_OPTIONS+=" -DEdgeTX_SUPERBUILD:BOOL=0 -DNATIVE_BUILD:BOOL=1"
 
 # Generate EDGETX_VERSION_SUFFIX if not already set
@@ -234,7 +234,7 @@ else
         c14 el18 h17 nb4p nv14 st16 pa01
         pl18 pl18ev pl18u
         t15 t15pro t15h7 t16 t18 t18h7 t22
-        tx15 gx15 tx16s tx16smk3 f16 v12 v15 v16
+        tx15 gx15 gx10 tx16s tx16smk3 f16 v12 v15 v16
         x10 x10express x12s
     )
 fi

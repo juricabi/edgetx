@@ -1,8 +1,8 @@
 include(CMakeForceCompiler)
 include(Bitmaps)
 
-set(PCB_TYPES X9LITE X9LITES X7 XLITE XLITES X9D X9D+ X9E X10 X12S PL18 T15PRO T15H7 T18H7 ST16 PA01 TX15 GX15 TX16SMK3 T22 V12 H17 V15)
-set(RADIO_LANGUAGES CN CZ DA DE EN ES FI FR HE HU IT JP KO NL PL PT RU SE SK TW UA)
+set(PCB_TYPES X9LITE X9LITES X7 XLITE XLITES X9D X9D+ X9E X10 X12S PL18 T15PRO T15H7 T18H7 ST16 PA01 TX15 GX15 GX10 TX16SMK3 T22 V12 H17 V15)
+set(RADIO_LANGUAGES CN CZ DA DE EN ES FI FR HE IT JP KO NL PL PT RU SE SK TW UA)
 set(TTS_LANGUAGES CN CZ DA DE EN ES FI FR HE HU IT JP KO NL PL PT RU SE SK TW UA)
 
 set(PCB "X9D+" CACHE STRING "Radio type, one of: ${PCB_TYPES}")
@@ -112,6 +112,8 @@ elseif(PCB STREQUAL H17)
   include(targets/h17/CMakeLists.txt)
 elseif(PCB STREQUAL T22)
   include(targets/t22/CMakeLists.txt)
+elseif(PCB STREQUAL GX10)
+  include(targets/gx10/CMakeLists.txt)
 elseif(PCB STREQUAL STM32H7S78_DK)
   include(targets/stm32h7s78-dk/CMakeLists.txt)
 elseif(PCB STREQUAL X9E OR PCB STREQUAL X9D+ OR PCB STREQUAL X9D OR PCB STREQUAL X7 OR PCB STREQUAL X9LITE OR PCB STREQUAL X9LITES OR PCB STREQUAL XLITE OR PCB STREQUAL XLITES)
@@ -188,7 +190,8 @@ if(ARCH STREQUAL ARM)
   include(targets/common/arm/CMakeLists.txt)
 endif()
 
-# Generate hardware definitions from hal.h
+# Dump the macros hal.h defines (<flavour>.json.h), e.g. to compare hardware
+# config between builds. The hw_defs JSON files are maintained by hand.
 # Deferred to the end of this directory so the preprocessor sees all flags,
 # including those added further down (e.g. BLUETOOTH)
 cmake_language(DEFER CALL AddHardwareDefTarget ${HW_DESC_JSON})
@@ -198,6 +201,10 @@ include_directories(targets/${TARGET_DIR} ${THIRDPARTY_DIR})
 
 if(NATIVE_BUILD)
   include_directories(targets/simu)
+endif()
+
+if(NOT TRANSLATIONS IN_LIST RADIO_LANGUAGES)
+  message(FATAL_ERROR "Unknown TRANSLATIONS '${TRANSLATIONS}', must be one of: ${RADIO_LANGUAGES}")
 endif()
 
 foreach(LANGUAGE ${RADIO_LANGUAGES})
@@ -715,7 +722,24 @@ endif()
 
 set(LINKER_SCRIPT firmware.ld)
 
-if(USE_FW_LTO)
+# LTO for the firmware: AUTO enables it on 512KB STM32F4 targets
+# (STM32F4xxxE), which are otherwise too tight on flash.
+set(USE_FW_LTO AUTO CACHE STRING "Use LTO to compile firmware (AUTO, ON, OFF)")
+set_property(CACHE USE_FW_LTO PROPERTY STRINGS AUTO ON OFF)
+
+if(USE_FW_LTO STREQUAL AUTO)
+  if(CPU_TYPE_FULL MATCHES "^STM32F4.*xE$")
+    set(FW_LTO ON)
+  else()
+    set(FW_LTO OFF)
+  endif()
+elseif(USE_FW_LTO)
+  set(FW_LTO ON)
+else()
+  set(FW_LTO OFF)
+endif()
+
+if(FW_LTO)
   message("-- Use LTO to compile firmware")
   target_compile_options(firmware PRIVATE -flto)
   target_link_options(firmware PRIVATE -Wl,-u,SystemCoreClockUpdate)

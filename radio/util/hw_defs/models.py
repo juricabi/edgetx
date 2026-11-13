@@ -98,6 +98,20 @@ FlexType = StrEnum(
 )
 
 
+INV_POT = 1
+INV_SLIDER = 2
+
+InversionType = Union[bool, Literal["pot", "slider"]]
+
+
+def _inversion_mask(inverted):
+    if inverted == "pot":
+        return INV_POT
+    if inverted == "slider":
+        return INV_SLIDER
+    return (INV_POT | INV_SLIDER) if inverted else 0
+
+
 class StickInput(BaseModel):
     name: StickEnum
     type: Literal["STICK"]
@@ -108,6 +122,10 @@ class StickInput(BaseModel):
     inverted: Optional[bool] = False
     pwm_channel: Optional[int] = None
 
+    @property
+    def inversion(self) -> int:
+        return _inversion_mask(self.inverted)
+
 
 class FlexInput(BaseModel):
     name: FlexInputEnum
@@ -116,10 +134,14 @@ class FlexInput(BaseModel):
     gpio: Optional[str] = None
     pin: Optional[str] = None
     channel: Optional[Union[str, int]] = None
-    inverted: Optional[bool] = False
+    inverted: Optional[InversionType] = False
     default: Optional[FlexType] = None
     label: Optional[str] = None
     short_label: Optional[str] = None
+
+    @property
+    def inversion(self) -> int:
+        return _inversion_mask(self.inverted)
 
 
 class SwitchInput(BaseModel):
@@ -130,6 +152,10 @@ class SwitchInput(BaseModel):
     pin: Optional[str] = None
     channel: Optional[Union[str, int]] = None
     inverted: Optional[bool] = False
+
+    @property
+    def inversion(self) -> int:
+        return _inversion_mask(self.inverted)
 
 
 class RawInput(BaseModel):
@@ -363,6 +389,7 @@ class Trainer(BaseModel):
     trainer_gpio_af: Optional[str] = None
     trainer_detect_gpio: Optional[str] = None
     trainer_detect_inverted: Optional[bool] = None
+    trainer_jack_crossover: Optional[bool] = None
 
 Input = Union[StickInput, FlexInput, SwitchInput, RawInput, VBatInput, RTCBatInput, LuxInput]
 

@@ -47,7 +47,7 @@ if [[ -z ${EDGETX_VERSION_SUFFIX} ]]; then
 fi
 
 : "${BUILD_TYPE:=Release}"
-: "${COMMON_OPTIONS:="-DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_RULE_MESSAGES=OFF -Wno-dev "}"
+: "${COMMON_OPTIONS:="-DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_RULE_MESSAGES=OFF ${CMAKE_NO_AUTHOR_WARNINGS} "}"
 : "${EXTRA_OPTIONS:="$EXTRA_OPTIONS"}"
 
 COMMON_OPTIONS+=${EXTRA_OPTIONS}" "
@@ -60,8 +60,12 @@ determine_max_jobs
 # workaround for GH repo owner
 git config --global --add safe.directory "$(pwd)"
 
-# wipe build directory clean
-rm -rf build && mkdir -p build && cd build
+# Firmware files land where the script was started from
+: "${OUTDIR:=$(pwd)}"
+
+# Scratch space under build/ - other build trees there are left alone
+BUILD_DIR=$(reset_scratch_build_dir ci-firmware) || exit 1
+cd "${BUILD_DIR}"
 
 GIT_SHA_SHORT=$(git rev-parse --short HEAD)
 
@@ -87,9 +91,9 @@ do
     rm -f CMakeCache.txt arm-none-eabi/CMakeCache.txt
 
     if [ -f "arm-none-eabi/firmware.uf2" ]; then
-        mv arm-none-eabi/firmware.uf2 "../${fw_name}.uf2"
+        mv arm-none-eabi/firmware.uf2 "${OUTDIR}/${fw_name}.uf2"
     else
-        mv arm-none-eabi/firmware.bin "../${fw_name}.bin"
+        mv arm-none-eabi/firmware.bin "${OUTDIR}/${fw_name}.bin"
     fi
     
 done

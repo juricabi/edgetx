@@ -144,11 +144,12 @@
 #define TR_AUX_SERIAL_MODES_9          "デバッグ"
 #define TR_AUX_SERIAL_MODES_10         "SpaceMouse"
 #define TR_AUX_SERIAL_MODES_11         "外部モジュール"
+#define TR_GLOBAL                      "グローバル"
 #define TR_SWTYPES_1                   "なし"
 #define TR_SWTYPES_2                   "トグル"
 #define TR_SWTYPES_3                   "2POS"
 #define TR_SWTYPES_4                   "3POS"
-#define TR_SWTYPES_5                   "グローバル"
+#define TR_SWTYPES_5                   TR_GLOBAL
 #define TR_POTTYPES_1                  "なし"
 #define TR_POTTYPES_2                  "ダイヤル"
 #define TR_POTTYPES_3                  TR("Pot w. det","ダイヤル(ノッチ)")
@@ -167,6 +168,11 @@
 #define TR_USBMODES_2                  TR("Joyst","JoyStick")
 #define TR_USBMODES_3                  TR("SDカード","ストレージ")
 #define TR_USBMODES_4                  "シリアル"
+#define TR_MODEL_USBMODES_1            TR_GLOBAL
+#define TR_MODEL_USBMODES_2            TR_USBMODES_1
+#define TR_MODEL_USBMODES_3            TR_USBMODES_2
+#define TR_MODEL_USBMODES_4            TR_USBMODES_3
+#define TR_MODEL_USBMODES_5            TR_USBMODES_4
 #define TR_JACK_MODES_1                "確認"
 #define TR_JACK_MODES_2                "音声"
 #define TR_JACK_MODES_3                "トレーナー"
@@ -197,7 +203,7 @@
 #define TR_CURVE_TYPES_1               "スタンダード"
 #define TR_CURVE_TYPES_2               "カスタム"
 
-#define TR_ADCFILTERVALUES_1           "グローバル"
+#define TR_ADCFILTERVALUES_1           TR_GLOBAL
 #define TR_ADCFILTERVALUES_2           "OFF"
 #define TR_ADCFILTERVALUES_3           "ON"
 
@@ -367,6 +373,7 @@
 
 #define TR_IMU_VSRCRAW_1             "チルトX軸"
 #define TR_IMU_VSRCRAW_2             "チルトY軸"
+#define TR_IMU_VSRCRAW_3             "Accl"
 
 #define TR_CYC_VSRCRAW_1             "CYC1"
 #define TR_CYC_VSRCRAW_2             "CYC2"
@@ -561,6 +568,9 @@
 #define TR_TRAINER_SHUTDOWN_ALARM      TR("Trainer shutdown", "シャットダウン時にトレーナーをチェック")
 #define TR_MODEL_STILL_POWERED         "電源が入ったままです"
 #define TR_TRAINER_STILL_CONNECTED     "トレーナー通信はまだ継続しています"
+#define TR_TRAINER_JACK_MODE           "Trainer lead"
+#define TR_TRAINER_JACK_MODES_1        "Crossover"
+#define TR_TRAINER_JACK_MODES_2        "Standard"
 #define TR_USB_STILL_CONNECTED         "USBが接続されたままです"
 #define TR_MODEL_SHUTDOWN              "シャットダウンしますか？"
 #define TR_PRESS_ENTER_TO_CONFIRM      "Enterを押して確認してください"
@@ -715,11 +725,9 @@
 #define TR_MULTI_SERVOFREQ             TR("Servo rate", "サーボ レート")
 #define TR_MULTI_MAX_THROW             TR("Max. Throw", "Max. throw有効")
 #define TR_MULTI_RFCHAN                TR("RF Channel", "送信チャンネル選択")
-#define TR_AFHDS3_RX_FREQ              TR("RX freq.", "受信周波数")
 #define TR_AFHDS3_ONE_TO_ONE_TELEMETRY TR("Unicast/Tel.", "ユニキャスト/テレメトリー")
 #define TR_AFHDS3_ONE_TO_MANY          "マルチキャスト"
 #define TR_AFHDS3_ACTUAL_POWER         TR("Act. pow", "実電力")
-#define TR_AFHDS3_POWER_SOURCE         TR("Power src.", "出力ソース")
 #define TR_IBUS2_SENSORS_MODE_ONLY     "Only in the iBUS2 mode can the sensors be set."
 #define TR_GPS_COORDS_FORMAT           TR("GPS Coords", "GPS座標形式")
 #define TR_VARIO                       TR("Vario", "バリオメーター")

@@ -76,11 +76,22 @@
 
 PACK(union SourceNumVal {
   struct {
-    int16_t value:10;
+    int16_t value:11;
     uint16_t isSource:1;
   };
-  uint16_t rawValue:11;
+  uint16_t rawValue:12;
 });
+
+// Inverted sources are stored negated, so every source must fit the signed
+// 11-bit value. This also covers ExpoData::srcRaw and LogicalSwitchData::v1,
+// and B&W edits output limit sources through this field.
+static_assert(INPUTSRC_LAST <= (1 << 10) - 1,
+              "Sources no longer fit in SourceNumVal");
+
+// MixData::srcRaw and the radio settings sources are signed 10-bit fields,
+// which only hold sources up to MIXSRC_LAST
+static_assert(MIXSRC_LAST <= (1 << 9) - 1,
+              "Mix sources no longer fit in 10-bit source fields");
 
 inline uint16_t makeSourceNumVal(int16_t val, bool isSource = false)
 {
@@ -88,6 +99,46 @@ inline uint16_t makeSourceNumVal(int16_t val, bool isSource = false)
   v.value = val;
   v.isSource = isSource;
   return v.rawValue;
+}
+
+// Value or source for output limits (0.1% units, range does not fit SourceNumVal)
+PACK(union LimitNumVal {
+  struct {
+    int16_t value:11;
+    uint16_t isSource:1;
+  };
+  uint16_t rawValue:12;
+});
+
+static_assert(INPUTSRC_LAST <= (1 << 10) - 1,
+              "Sources no longer fit in LimitNumVal");
+
+inline uint16_t makeLimitNumVal(int16_t val, bool isSource = false)
+{
+  LimitNumVal v;
+  v.value = val;
+  v.isSource = isSource;
+  return v.rawValue;
+}
+
+// Conversion for Lua API, numeric limits reach +/-1500 so sources start at 2048
+constexpr int LIMIT_LUA_SRC_BASE = 2048;
+
+inline int limitNumValToLuaInt(uint16_t val, int numOffset)
+{
+  LimitNumVal v;
+  v.rawValue = val;
+  if (!v.isSource) return v.value + numOffset;
+  return v.value + ((v.value < 0) ? -LIMIT_LUA_SRC_BASE : LIMIT_LUA_SRC_BASE);
+}
+
+inline uint16_t luaIntToLimitNumVal(int val, int numOffset)
+{
+  if (val >= LIMIT_LUA_SRC_BASE)
+    return makeLimitNumVal(val - LIMIT_LUA_SRC_BASE, true);
+  if (val <= -LIMIT_LUA_SRC_BASE)
+    return makeLimitNumVal(val + LIMIT_LUA_SRC_BASE, true);
+  return makeLimitNumVal(val - numOffset);
 }
 
 // Conversion for Lua API
@@ -119,8 +170,8 @@ inline uint16_t luaIntToSourceNumval(int val)
  */
 
 PACK(struct CurveRef {
-  uint16_t type:5;
-  uint16_t value:11 CUST(r_sourceNumVal,w_sourceNumVal);
+  uint16_t type:4;
+  uint16_t value:12 CUST(r_sourceNumVal,w_sourceNumVal);
 });
 
 PACK(struct MixData {
@@ -133,11 +184,12 @@ PACK(struct MixData {
   uint16_t speedPrec:1;
   uint16_t flightModes:9 CUST(r_flightModes, w_flightModes);
   uint16_t spare:1 SKIP;
-  uint32_t weight:11 CUST(r_sourceNumVal,w_sourceNumVal);
-  uint32_t offset:11 CUST(r_sourceNumVal,w_sourceNumVal);
-  int32_t  swtch:10 CUST(r_swtchSrc,w_swtchSrc);
+  uint32_t weight:12 CUST(r_sourceNumVal,w_sourceNumVal);
+  uint32_t offset:12 CUST(r_sourceNumVal,w_sourceNumVal);
+  uint32_t delayUp:8;
+  int16_t  swtch:10 CUST(r_swtchSrc,w_swtchSrc);
+  uint16_t spare3:6 SKIP;
   CurveRef curve;
-  uint8_t  delayUp;
   uint8_t  delayDown;
   uint8_t  speedUp;
   uint8_t  speedDown;
@@ -151,16 +203,18 @@ PACK(struct MixData {
 PACK(struct ExpoData {
   uint16_t mode:2;
   uint16_t scale:14;
+  uint32_t flightModes:9 CUST(r_flightModes, w_flightModes);
+  int32_t  srcRaw:11 ENUM(MixSources) CUST(r_mixSrcRawEx,w_mixSrcRawEx);
+  uint32_t weight:12 CUST(r_sourceNumVal,w_sourceNumVal);
+  // r_carryTrim writes at its own offset, keep it just before trimSource
   CUST_ATTR(carryTrim, r_carryTrim, nullptr); //pre 2.9
-  int16_t  trimSource:6;
-  int16_t  srcRaw:10 ENUM(MixSources) CUST(r_mixSrcRawEx,w_mixSrcRawEx);
-  uint32_t weight:11 CUST(r_sourceNumVal,w_sourceNumVal);
-  uint32_t offset:11 CUST(r_sourceNumVal,w_sourceNumVal);
+  int32_t  trimSource:6;
+  uint32_t offset:12 CUST(r_sourceNumVal,w_sourceNumVal);
   int32_t  swtch:10 CUST(r_swtchSrc,w_swtchSrc);
+  uint32_t spare3:4 SKIP;
   CurveRef curve;
-  uint16_t chn:5;
-  uint16_t flightModes:9 CUST(r_flightModes, w_flightModes);
-  uint16_t spare:2 SKIP;
+  uint8_t  chn:5;
+  uint8_t  spare:3 SKIP;
   NOBACKUP(char name[LEN_EXPOMIX_NAME]);
 });
 
@@ -169,13 +223,12 @@ PACK(struct ExpoData {
  */
 
 PACK(struct LimitData {
-  int32_t min:11 CUST(in_read_weight,in_write_weight);
-  int32_t max:11 CUST(in_read_weight,in_write_weight);
+  uint32_t min:12 CUST(r_limitNumVal,w_limitNumVal);
+  uint32_t max:12 CUST(r_limitNumVal,w_limitNumVal);
   int32_t ppmCenter:10; // TODO can be reduced to 8 bits
-  int16_t offset:11 CUST(in_read_weight,in_write_weight);
+  uint16_t offset:12 CUST(r_limitNumVal,w_limitNumVal);
   uint16_t symetrical:1;
   uint16_t revert:1;
-  uint16_t spare:3 SKIP;
   int8_t curve;
   NOBACKUP(char name[LEN_CHANNEL_NAME]);
 });
@@ -187,11 +240,12 @@ PACK(struct LimitData {
 PACK(struct LogicalSwitchData {
   uint8_t  func ENUM(LogicalSwitchesFunctions);
   CUST_ATTR(def,r_logicSw,w_logicSw);
-  int32_t  v1:10 SKIP;
+  int32_t  v1:11 SKIP;
   int32_t  v3:10 SKIP;
   int32_t  andsw:10 CUST(r_swtchSrc,w_swtchSrc);
   uint32_t lsPersist:1;
-  uint32_t lsState:1;
+  uint8_t  lsState:1;
+  uint8_t  spare:7 SKIP;
   int16_t  v2 SKIP;
   uint8_t  delay;
   uint8_t  duration;
@@ -414,6 +468,14 @@ PACK(struct VarioData {
 #define TELEMETRY_ENDPOINT_NONE    0xFF
 #define TELEMETRY_ENDPOINT_SPORT   0x07
 
+// Calculated sensor source: sensor index or GVar
+// (see TELEM_CALC_SRC_GV1 in telemetry/telemetry_sensors.h)
+#if defined(YAML_GENERATOR)
+PACK(struct CalcSensorSource {
+  int8_t val CUST(r_calcSource,w_calcSource);
+});
+#endif
+
 PACK(struct TelemetrySensor {
   union {
     uint16_t id;  // data identifier, for FrSky we can reuse existing ones.
@@ -452,7 +514,11 @@ PACK(struct TelemetrySensor {
       uint16_t spare SKIP;
     }) cell);
     NOBACKUP(PACK(struct {
+#if defined(YAML_GENERATOR)
+      CalcSensorSource sources[4];
+#else
       int8_t sources[4];
+#endif
     }) calc);
     NOBACKUP(PACK(struct {
       uint8_t source;
@@ -469,6 +535,7 @@ PACK(struct TelemetrySensor {
     void init(const char *label, uint8_t unit=UNIT_RAW, uint8_t prec=0);
     void init(uint16_t id);
     bool isAvailable() const;
+    bool isOfflineFresh() const;
     int32_t getValue(int32_t value, uint8_t unit, uint8_t prec) const;
     bool isConfigurable() const;
     bool isPrecConfigurable() const;
@@ -802,11 +869,14 @@ PACK(struct ModelData {
   uint8_t   disableTelemetryWarning:1;
   uint8_t   showInstanceIds:1;
   uint8_t   checklistInteractive:1;
+  uint8_t   potsWarnMode:2 ENUM(PotsWarnMode);
+  NOBACKUP(uint8_t jitterFilter:2 ENUM(ModelOverridableEnable));
+  uint8_t   thrTrimSw:3;
+  NOBACKUP(uint8_t usbMode:3 ENUM(ModelUsbMode));
 #if defined(USE_HATS_AS_KEYS)
   NOBACKUP(uint8_t hatsMode:2 ENUM(HatsMode));
-  uint8_t   spare3:2 SKIP;  // padding to 8-bit aligment
 #else
-  uint8_t   spare3:4 SKIP;  // padding to 8-bit aligment
+  uint8_t   spare3:2 SKIP;  // padding to 8-bit aligment
 #endif
   int8_t    customThrottleWarningPosition;
   BeepANACenter beepANACenter;
@@ -837,11 +907,6 @@ PACK(struct ModelData {
   RssiAlarmData rssiAlarms;
 #endif
   NOBACKUP(RFAlarmData rfAlarms);
-
-  uint8_t thrTrimSw:3;
-  uint8_t potsWarnMode:2 ENUM(PotsWarnMode);
-  NOBACKUP(uint8_t jitterFilter:2 ENUM(ModelOverridableEnable));
-  uint8_t spare1:1 SKIP;
 
   ModuleData moduleData[NUM_MODULES];
   int16_t failsafeChannels[MAX_OUTPUT_CHANNELS];
@@ -929,6 +994,11 @@ PACK(struct ModelData {
   uint8_t modelSFDisabled:2 ENUM(ModelOverridableEnable);
   uint8_t modelCustomScriptsDisabled:2 ENUM(ModelOverridableEnable);
   uint8_t modelTelemetryDisabled:2 ENUM(ModelOverridableEnable);
+#if defined(COLORLCD)
+  uint8_t   spare1:2 SKIP;  // padding to 8-bit aligment
+#else
+  uint8_t   spare1:4 SKIP;  // padding to 8-bit aligment
+#endif
 
   SwitchConfig getSwitchType(uint8_t n);
   void setSwitchType(uint8_t n, SwitchConfig v);
@@ -1216,13 +1286,16 @@ PACK(struct RadioData {
   // Radio level tabs control (global settings)
   NOBACKUP(uint8_t modelSelectLayout:2);
   NOBACKUP(uint8_t radioThemesDisabled:1);
+  // 0 = trainer in/out on their own jack contacts (crossover lead, default),
+  // 1 = both on the tip (mono / straight lead). TRAINER_JACK_CROSSOVER only
+  NOBACKUP(uint8_t trainerTipOnly:1);
 #if defined(USB_CHARGE_CONTROL)
   // 0 = charge while USB active (default), 1 = hold the charger off while USB
   // is plugged in SD/Joystick/VCP mode
   NOBACKUP(uint8_t usbChargeDisabled:1);
-  NOBACKUP(uint8_t spare:6 SKIP);
+  NOBACKUP(uint8_t spare:5 SKIP);
 #else
-  NOBACKUP(uint8_t spare:7 SKIP);
+  NOBACKUP(uint8_t spare:6 SKIP);
 #endif
 #elif LCD_W == 128
   uint8_t invertLCD:1;          // Invert B&W LCD display

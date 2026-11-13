@@ -152,11 +152,12 @@
 #define TR_AUX_SERIAL_MODES_10          "SpaceMouse"
 #define TR_AUX_SERIAL_MODES_11          "Extern modul"
 
+#define TR_GLOBAL                       "Global"
 #define TR_SWTYPES_1                    "Ingen"
 #define TR_SWTYPES_2                    "2 pos flipp"
 #define TR_SWTYPES_3                    "2 pos"
 #define TR_SWTYPES_4                    "3 pos"
-#define TR_SWTYPES_5                    "Global"
+#define TR_SWTYPES_5                    TR_GLOBAL
 
 #define TR_POTTYPES_1                   "Ingen"
 #define TR_POTTYPES_2                   "Vred"
@@ -174,8 +175,13 @@
 #define TR_COUNTRY_CODES_3              TR("EU","Europa")
 #define TR_USBMODES_1                   "Fråga"
 #define TR_USBMODES_2                   "Joystick"
-#define TR_USBMODES_3                   TR("SD-kort","SD-kortlagring")
+#define TR_USBMODES_3                   TR3("SD-kort","SD-kort","SD-kortlagring")
 #define TR_USBMODES_4                   "Seriell"
+#define TR_MODEL_USBMODES_1             TR_GLOBAL
+#define TR_MODEL_USBMODES_2             TR_USBMODES_1
+#define TR_MODEL_USBMODES_3             TR_USBMODES_2
+#define TR_MODEL_USBMODES_4             TR_USBMODES_3
+#define TR_MODEL_USBMODES_5             TR_USBMODES_4
 #define TR_JACK_MODES_1                 "Fråga"
 #define TR_JACK_MODES_2                 "Audio"
 #define TR_JACK_MODES_3                 "Lärare"
@@ -201,7 +207,7 @@
 #define TR_CURVE_TYPES_1                "Normal"
 #define TR_CURVE_TYPES_2                "Anpassad"
 
-#define TR_ADCFILTERVALUES_1            "Global"
+#define TR_ADCFILTERVALUES_1            TR_GLOBAL
 #define TR_ADCFILTERVALUES_2            "Av"
 #define TR_ADCFILTERVALUES_3            "På"
 
@@ -354,7 +360,7 @@
 #define TR_HATSOPT_1                    "Endast trimm"
 #define TR_HATSOPT_2                    "Endast knapp"
 #define TR_HATSOPT_3                    "Ändringsbar"
-#define TR_HATSOPT_4                    "Global"
+#define TR_HATSOPT_4                    TR_GLOBAL
 #define TR_HATSMODE_TRIMS               "Hattläge: Trimmar"
 #define TR_HATSMODE_KEYS                "Hattläge: Knappar"
 #define TR_HATSMODE_KEYS_HELP           "Vänster sida:\n"\
@@ -370,6 +376,7 @@
 
 #define TR_IMU_VSRCRAW_1                "TltX"
 #define TR_IMU_VSRCRAW_2                "TltY"
+#define TR_IMU_VSRCRAW_3             "Accl"
 
 #define TR_CYC_VSRCRAW_1                "CYK1"
 #define TR_CYC_VSRCRAW_2                "CYK2"
@@ -565,6 +572,9 @@
 #define TR_TRAINER_SHUTDOWN_ALARM       TR("Lärare alarm", "Kolla läraranslutningen")
 #define TR_MODEL_STILL_POWERED          TR("Modell på","Modellen är på")
 #define TR_TRAINER_STILL_CONNECTED      "Lärare fortfarande ansluten"
+#define TR_TRAINER_JACK_MODE           "Trainer lead"
+#define TR_TRAINER_JACK_MODES_1        "Crossover"
+#define TR_TRAINER_JACK_MODES_2        "Standard"
 #define TR_USB_STILL_CONNECTED          "USB är ansluten"
 #define TR_MODEL_SHUTDOWN               "Stänga av?"
 #define TR_PRESS_ENTER_TO_CONFIRM       "Tryck [ENTER] för att bekräfta"
@@ -1054,11 +1064,9 @@
 #define TR_UNIT                         "Enhet"
 #define TR_TELEMETRY_NEWSENSOR          "Lägg till..."
 #define TR_CHANNELRANGE                 TR("Kanalomr.", "Kanalområde")
-#define TR_AFHDS3_RX_FREQ               TR("Rx frekv.", "Rx frekvens")
 #define TR_AFHDS3_ONE_TO_ONE_TELEMETRY  TR("Unicast/Tel.", "Unicast/Telemetri")
 #define TR_AFHDS3_ONE_TO_MANY           "Multicast"
 #define TR_AFHDS3_ACTUAL_POWER          TR("Act. pow", "Actual power")
-#define TR_AFHDS3_POWER_SOURCE          "Strömkälla"
 #define TR_IBUS2_SENSORS_MODE_ONLY      "Sensorerna kan endast ställas in i iBUS2-läge."
 #define TR_ANTENNACONFIRM1              "EXT. ANTENN"
 

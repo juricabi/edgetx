@@ -146,11 +146,12 @@
 #define TR_AUX_SERIAL_MODES_9          "Відлаг."
 #define TR_AUX_SERIAL_MODES_10         "SpaceMouse"
 #define TR_AUX_SERIAL_MODES_11         "Зовн. модуль"	/* for untranslated - use english */
+#define TR_GLOBAL                      "Global"
 #define TR_SWTYPES_1                   "Немає"
 #define TR_SWTYPES_2                   "Перемик."
 #define TR_SWTYPES_3                   "2поз. пер."
 #define TR_SWTYPES_4                   "3поз. пер."
-#define TR_SWTYPES_5                   "Global"
+#define TR_SWTYPES_5                   TR_GLOBAL
 #define TR_POTTYPES_1                  "Немає"
 #define TR_POTTYPES_2                  "Потенц."
 #define TR_POTTYPES_3                  TR("Пот. з крок.","Потенц. з кроком")
@@ -169,6 +170,11 @@
 #define TR_USBMODES_2                  TR("Джойст.","Джойстик")
 #define TR_USBMODES_3                  TR("SD карт.","SD картка")
 #define TR_USBMODES_4                  "Послід."	/* for untranslated - use english */
+#define TR_MODEL_USBMODES_1            TR_GLOBAL
+#define TR_MODEL_USBMODES_2            TR_USBMODES_1
+#define TR_MODEL_USBMODES_3            TR_USBMODES_2
+#define TR_MODEL_USBMODES_4            TR_USBMODES_3
+#define TR_MODEL_USBMODES_5            TR_USBMODES_4
 #define TR_JACK_MODES_1                "Вибір"
 #define TR_JACK_MODES_2                "Аудіо"
 #define TR_JACK_MODES_3                "Трен."
@@ -199,7 +205,7 @@
 #define TR_CURVE_TYPES_1               "Стандарт"
 #define TR_CURVE_TYPES_2               "Вибір"
 
-#define TR_ADCFILTERVALUES_1           "Global"
+#define TR_ADCFILTERVALUES_1           TR_GLOBAL
 #define TR_ADCFILTERVALUES_2           "Off"
 #define TR_ADCFILTERVALUES_3           "On"	/* use english */
 
@@ -348,7 +354,7 @@
 #define TR_HATSOPT_1                   "Тільки Трим."
 #define TR_HATSOPT_2                   "Тільки Кнопки"
 #define TR_HATSOPT_3                   "Перемик."
-#define TR_HATSOPT_4                   "Global"	/* for untranslated - use english */
+#define TR_HATSOPT_4                   TR_GLOBAL	/* for untranslated - use english */
 #define TR_HATSMODE_TRIMS              "Hats mode: Трим."
 #define TR_HATSMODE_KEYS               "Hats mode: Кнопки"
 #define TR_HATSMODE_KEYS_HELP          "Ліва сторона:\n"\
@@ -370,6 +376,7 @@
 
 #define TR_IMU_VSRCRAW_1             "TltX"
 #define TR_IMU_VSRCRAW_2             "TltY"
+#define TR_IMU_VSRCRAW_3             "Accl"
 #define TR_CYC_VSRCRAW_1             "CYC1"
 #define TR_CYC_VSRCRAW_2             "CYC2"
 #define TR_CYC_VSRCRAW_3             "CYC3"
@@ -563,6 +570,9 @@
 #define TR_TRAINER_SHUTDOWN_ALARM      TR("Тренер при вимк.", "Перевіряти тренер при вимиканні")
 #define TR_MODEL_STILL_POWERED         "Модель досі під живленням"
 #define TR_TRAINER_STILL_CONNECTED     "Трен. досі підключено"
+#define TR_TRAINER_JACK_MODE           "Trainer lead"
+#define TR_TRAINER_JACK_MODES_1        "Crossover"
+#define TR_TRAINER_JACK_MODES_2        "Standard"
 #define TR_USB_STILL_CONNECTED         "USB досі підключено"
 #define TR_MODEL_SHUTDOWN              "Вимкнути?"
 #define TR_PRESS_ENTER_TO_CONFIRM      "Тисни enter для підтвердження"
@@ -717,11 +727,9 @@
 #define TR_MULTI_SERVOFREQ             TR("Частота серво", "Частота оновлення серво")
 #define TR_MULTI_MAX_THROW             TR("Max. Хід", "Увімкн. max. хід")
 #define TR_MULTI_RFCHAN                TR("RF Канал", "Обери RF канал")
-#define TR_AFHDS3_RX_FREQ              TR("RX част.", "RX частота")
 #define TR_AFHDS3_ONE_TO_ONE_TELEMETRY TR("Unicast/Телем.", "Unicast/Телеметрія")
 #define TR_AFHDS3_ONE_TO_MANY          "Multicast"
 #define TR_AFHDS3_ACTUAL_POWER         TR("Факт.потужн.", "Фактична потужність")
-#define TR_AFHDS3_POWER_SOURCE         TR("Джерело живл.", "Джерело живлення")
 #define TR_IBUS2_SENSORS_MODE_ONLY     "Only in the iBUS2 mode can the sensors be set."
 #define TR_GPS_COORDS_FORMAT           TR("Формат коорд.", "Формат координат")
 #define TR_VARIO                       TR("Варіо", "Варіометр")

@@ -240,7 +240,7 @@ inline void RAISE_ALERT(const char *title, const char *msg, const char *info,
 }
 inline void ALERT(const char *title, const char *msg, uint8_t sound)
 {
-  raiseAlert(title, msg, STR_PRESS_ANY_KEY_TO_SKIP, sound);
+  raiseAlert(title, msg, STR_OK, sound);
 }
 
 #else // !COLORLCD && GUI
@@ -353,14 +353,12 @@ uint8_t statusLedPhaseColor(uint8_t phase);
 bool statusLedColorAvailable(int color);
 #endif
 
-uint16_t isqrt32(uint32_t n);
+#include "maths.h"
 
 void setDefaultOwnerId();
 void generalDefault();
 void generalDefaultSwitches();
 void generalDefaultUILanguage();
-
-uint32_t hash(const void * ptr, uint32_t size);
 
 #define calc100to256_16Bits(x) calc100to256(x)
 #define calc100toRESX_16Bits(x) calc100toRESX(x)

@@ -144,11 +144,12 @@
 #define TR_AUX_SERIAL_MODES_9          "Debug"
 #define TR_AUX_SERIAL_MODES_10         "SpaceMouse"
 #define TR_AUX_SERIAL_MODES_11         "External module"
+#define TR_GLOBAL                      "Global"
 #define TR_SWTYPES_1                   "None"
 #define TR_SWTYPES_2                   "Toggle"
 #define TR_SWTYPES_3                   "2POS"
 #define TR_SWTYPES_4                   "3POS"
-#define TR_SWTYPES_5                   "Global"
+#define TR_SWTYPES_5                   TR_GLOBAL
 #define TR_POTTYPES_1                  "None"
 #define TR_POTTYPES_2                  "Pot"
 #define TR_POTTYPES_3                  TR("Pot w. det","Pot with detent")
@@ -167,6 +168,11 @@
 #define TR_USBMODES_2                  TR("Joyst","Joystick")
 #define TR_USBMODES_3                  TR("SDCard","Storage")
 #define TR_USBMODES_4                  "Serial"
+#define TR_MODEL_USBMODES_1            TR_GLOBAL
+#define TR_MODEL_USBMODES_2            TR_USBMODES_1
+#define TR_MODEL_USBMODES_3            TR_USBMODES_2
+#define TR_MODEL_USBMODES_4            TR_USBMODES_3
+#define TR_MODEL_USBMODES_5            TR_USBMODES_4
 #define TR_JACK_MODES_1                "Ask"
 #define TR_JACK_MODES_2                "Audio"
 #define TR_JACK_MODES_3                "Trainer"
@@ -197,7 +203,7 @@
 #define TR_CURVE_TYPES_1               "Standard"
 #define TR_CURVE_TYPES_2               "Custom"
 
-#define TR_ADCFILTERVALUES_1           "Global"
+#define TR_ADCFILTERVALUES_1           TR_GLOBAL
 #define TR_ADCFILTERVALUES_2           "Off"
 #define TR_ADCFILTERVALUES_3           "On"
 
@@ -346,7 +352,7 @@
 #define TR_HATSOPT_1                   "Trims only"
 #define TR_HATSOPT_2                   "Keys only"
 #define TR_HATSOPT_3                   "Switchable"
-#define TR_HATSOPT_4                   "Global"
+#define TR_HATSOPT_4                   TR_GLOBAL
 #define TR_HATSMODE_TRIMS              "Hats mode: Trims"
 #define TR_HATSMODE_KEYS               "Hats mode: Keys"
 #define TR_HATSMODE_KEYS_HELP          "Left side:\n"\
@@ -368,6 +374,7 @@
 
 #define TR_IMU_VSRCRAW_1             "TltX"
 #define TR_IMU_VSRCRAW_2             "TltY"
+#define TR_IMU_VSRCRAW_3             "Accl"
 
 #define TR_CYC_VSRCRAW_1             "CYC1"
 #define TR_CYC_VSRCRAW_2             "CYC2"
@@ -562,6 +569,9 @@
 #define TR_TRAINER_SHUTDOWN_ALARM      TR("Trainer shutdown", "Check trainer on shutdown")
 #define TR_MODEL_STILL_POWERED         "Model still powered"
 #define TR_TRAINER_STILL_CONNECTED     TR("Trainer still on","Trainer still connected")
+#define TR_TRAINER_JACK_MODE           "Trainer lead"
+#define TR_TRAINER_JACK_MODES_1        "Crossover"
+#define TR_TRAINER_JACK_MODES_2        "Standard"
 #define TR_USB_STILL_CONNECTED         "USB still connected"
 #define TR_MODEL_SHUTDOWN              "Shutdown?"
 #define TR_PRESS_ENTER_TO_CONFIRM      "Press enter to confirm"
@@ -717,11 +727,9 @@
 #define TR_MULTI_SERVOFREQ             TR("Servo rate", "Servo update rate")
 #define TR_MULTI_MAX_THROW             TR("Max. Throw", "Enable max. throw")
 #define TR_MULTI_RFCHAN                TR("RF Channel", "Select RF channel")
-#define TR_AFHDS3_RX_FREQ              TR("RX freq.", "RX frequency")
 #define TR_AFHDS3_ONE_TO_ONE_TELEMETRY TR("Unicast/Tel.", "Unicast/Telemetry")
 #define TR_AFHDS3_ONE_TO_MANY          "Multicast"
 #define TR_AFHDS3_ACTUAL_POWER         TR("Act. pow", "Actual power")
-#define TR_AFHDS3_POWER_SOURCE         TR("Power src.", "Power source")
 #define TR_IBUS2_SENSORS_MODE_ONLY     "Only in the iBUS2 mode can the sensors be set."
 #define TR_GPS_COORDS_FORMAT           TR("GPS Coords", "Coordinate format")
 #define TR_VARIO                       TR("Vario", "Variometer")

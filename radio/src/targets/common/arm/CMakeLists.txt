@@ -189,13 +189,14 @@ if(PPM)
   set(SRC ${SRC} telemetry/mlink.cpp)
 endif()
 
-if(DSM2)
-  add_definitions(-DDSM2)
+if(DSMP)
+  # DSMP reuses the DSM2 driver
+  set(DSM2 ON)
+  add_definitions(-DDSMP)
 endif()
 
-if(DSMP)
+if(DSM2)
   add_definitions(-DDSM2)
-  add_definitions(-DDSMP)
 endif()
 
 
@@ -275,7 +276,10 @@ if(GHOST)
     )
 endif()
 
-add_definitions(-g)
+# The WASM modules are stripped at link time, so this would be wasted work
+if(NOT WASI)
+  add_definitions(-g)
+endif()
 
 add_definitions(-DCPUARM)
 add_definitions(-DGPS)

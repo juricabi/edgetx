@@ -29,7 +29,7 @@ fi
 : ${SRCDIR:=$(dirname "$(pwd)/$0")/..}
 
 : ${BUILD_TYPE:=Debug}
-: ${COMMON_OPTIONS:="-DCMAKE_BUILD_TYPE=$BUILD_TYPE -Wno-dev "}
+: ${COMMON_OPTIONS:="-DCMAKE_BUILD_TYPE=$BUILD_TYPE ${CMAKE_NO_AUTHOR_WARNINGS} "}
 if (( $WERROR )); then COMMON_OPTIONS+=" -DWARNINGS_AS_ERRORS=YES "; fi
 
 : ${EXTRA_OPTIONS:="$EXTRA_OPTIONS"}
@@ -41,8 +41,9 @@ COMMON_OPTIONS+=${EXTRA_OPTIONS}" "
 # Determine parallel jobs
 determine_max_jobs
 
-# wipe build directory clean
-rm -rf build && mkdir -p build && cd build
+# Scratch space under build/ - other build trees there are left alone
+BUILD_DIR=$(reset_scratch_build_dir ci-tests) || exit 1
+cd "${BUILD_DIR}"
 
 target_names=$(echo "$FLAVOR" | tr '[:upper:]' '[:lower:]' | tr ';' '\n')
 

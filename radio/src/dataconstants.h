@@ -507,6 +507,7 @@ enum MixSources {
 #if defined(IMU)
   MIXSRC_TILT_X,
   MIXSRC_TILT_Y,
+  MIXSRC_G_FORCE,
 #endif
 
 #if defined(PCBHORUS)
@@ -706,6 +707,15 @@ enum ModelOverridableEnable {
   OVERRIDE_GLOBAL,
   OVERRIDE_OFF,
   OVERRIDE_ON
+};
+
+// Model USB mode: GLOBAL uses the radio setting, others are USB mode + 1
+enum ModelUsbMode {
+  USBMODE_GLOBAL,
+  USBMODE_ASK,
+  USBMODE_JOYSTICK,
+  USBMODE_STORAGE,
+  USBMODE_SERIAL
 };
 
 #define SELECTED_THEME_NAME_LEN 26

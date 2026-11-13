@@ -425,6 +425,7 @@ void SetupPanel::update()
   ui->checklistInteractive->setChecked(model->checklistInteractive);
   ui->gfEnabled->setChecked(!model->noGlobalFunctions);
   ui->jitterFilter->setCurrentIndex(model->jitterFilter);
+  ui->usbMode->setCurrentIndex(model->usbMode);
 
   updateBeepCenter();
   updateStartupSwitches();
@@ -569,6 +570,14 @@ void SetupPanel::on_jitterFilter_currentIndexChanged(int index)
   }
 }
 
+void SetupPanel::on_usbMode_currentIndexChanged(int index)
+{
+  if (!lock) {
+    model->usbMode = ui->usbMode->currentIndex();
+    emit modified();
+  }
+}
+
 void SetupPanel::on_throttleTrim_toggled(bool checked)
 {
   model->thrTrim = checked;
@@ -622,7 +631,7 @@ bool SetupPanel::hasTimerClipboardData(QByteArray * data) const
 {
   const QClipboard * clipboard = QApplication::clipboard();
   const QMimeData * mimeData = clipboard->mimeData();
-  if (mimeData->hasFormat(MIMETYPE_TIMER)) {
+  if (mimeData && mimeData->hasFormat(MIMETYPE_TIMER)) {
     if (data)
       data->append(mimeData->data(MIMETYPE_TIMER));
     return true;

@@ -1,3 +1,18 @@
+# Repository root, so scratch build dirs don't depend on the caller's cwd
+EDGETX_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Recreate <repo>/build/<name> and print its path. Only ever touches that
+# subdirectory, so preset build trees elsewhere under build/ are left alone.
+reset_scratch_build_dir() {
+    local name="$1"
+    if [[ -z "$name" || "$name" == *..* || "$name" == /* ]]; then
+        echo "reset_scratch_build_dir: invalid name '$name'" >&2
+        return 1
+    fi
+    local dir="${EDGETX_REPO_ROOT}/build/${name}"
+    cmake -E rm -rf "$dir" && cmake -E make_directory "$dir" && echo "$dir"
+}
+
 get_target_build_options() {
     local target_name=$1
 
@@ -12,7 +27,7 @@ get_target_build_options() {
             BUILD_OPTIONS+="-DPCB=X7"
             ;;
         x7access)
-            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=ACCESS -DPXX1=YES -DUSE_FW_LTO=y"
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=ACCESS -DPXX1=YES"
             ;;
         t12)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=T12 -DINTERNAL_MODULE_MULTI=ON"
@@ -21,7 +36,10 @@ get_target_build_options() {
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TX12"
             ;;
         tx12mk2)
-            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TX12MK2 -DUSE_FW_LTO=y"
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TX12MK2"
+            ;;
+        gx10)
+            BUILD_OPTIONS+="-DPCB=GX10"
             ;;
         gx12)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=GX12"
@@ -33,10 +51,10 @@ get_target_build_options() {
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=T8"
             ;;
         zorro)
-            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=ZORRO -DUSE_FW_LTO=y"
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=ZORRO"
             ;;
         pocket)
-            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=POCKET -DUSE_FW_LTO=y"
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=POCKET"
             ;;
         mt12)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=MT12"
@@ -48,7 +66,7 @@ get_target_build_options() {
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TPRO"
             ;;
         tprov2)
-            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TPROV2 -DUSE_FW_LTO=y"
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TPROV2"
             ;;
         tpros)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TPROS"
@@ -57,7 +75,7 @@ get_target_build_options() {
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=BUMBLEBEE"
             ;;
         t20)
-            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=T20 -DUSE_FW_LTO=y"
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=T20"
             ;;
         t12max)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=T12MAX"
@@ -72,7 +90,7 @@ get_target_build_options() {
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=LR3PRO"
             ;;
         commando8)
-            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=COMMANDO8 -DUSE_FW_LTO=y"
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=COMMANDO8"
             ;;
         xlite)
             BUILD_OPTIONS+="-DPCB=XLITE"
@@ -87,10 +105,10 @@ get_target_build_options() {
             BUILD_OPTIONS+="-DPCB=X9D+"
             ;;
         x9dp2019)
-            BUILD_OPTIONS+="-DPCB=X9D+ -DPCBREV=2019 -DUSE_FW_LTO=y"
+            BUILD_OPTIONS+="-DPCB=X9D+ -DPCBREV=2019"
             ;;
         x9e)
-            BUILD_OPTIONS+="-DPCB=X9E -DUSE_FW_LTO=y"
+            BUILD_OPTIONS+="-DPCB=X9E"
             ;;
         x10)
             BUILD_OPTIONS+="-DPCB=X10"
@@ -231,3 +249,16 @@ cmake_build_parallel() {
     cmake --build "${args[@]}" --parallel ${native_flags}
   fi
 }
+
+# Flag that silences CMake author (formerly "dev") warnings. CMake 4.4 deprecated
+# -Wno-dev in favour of -Wno-author, which older versions accept but ignore.
+cmake_no_author_warnings_flag() {
+  local major minor
+  IFS=. read -r major minor _ < <(cmake --version 2>/dev/null | sed -n '1s/^[^0-9]*//p')
+  if (( ${major:-0} > 4 || (${major:-0} == 4 && ${minor:-0} >= 4) )); then
+    echo "-Wno-author"
+  else
+    echo "-Wno-dev"
+  fi
+}
+CMAKE_NO_AUTHOR_WARNINGS=$(cmake_no_author_warnings_flag)

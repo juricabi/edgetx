@@ -363,8 +363,6 @@
 #define STR_AFHDS3_ACTUAL_POWER currentLangStrings->STR_AFHDS3_ACTUAL_POWER
 #define STR_AFHDS3_ONE_TO_MANY currentLangStrings->STR_AFHDS3_ONE_TO_MANY
 #define STR_AFHDS3_ONE_TO_ONE_TELEMETRY currentLangStrings->STR_AFHDS3_ONE_TO_ONE_TELEMETRY
-#define STR_AFHDS3_POWER_SOURCE currentLangStrings->STR_AFHDS3_POWER_SOURCE
-#define STR_AFHDS3_RX_FREQ currentLangStrings->STR_AFHDS3_RX_FREQ
 #define STR_IBUS2_SENSORS_MODE_ONLY currentLangStrings->STR_IBUS2_SENSORS_MODE_ONLY
 #endif
 
@@ -1010,6 +1008,8 @@
 #define STR_TOUCH_PANEL currentLangStrings->STR_TOUCH_PANEL
 #define STR_TRAINER_SHUTDOWN_ALARM currentLangStrings->STR_TRAINER_SHUTDOWN_ALARM
 #define STR_TRAINER_STILL_CONNECTED currentLangStrings->STR_TRAINER_STILL_CONNECTED
+#define STR_TRAINER_JACK_MODE currentLangStrings->STR_TRAINER_JACK_MODE
+#define STR_TRAINER_JACK_MODES currentLangStrings->STR_TRAINER_JACK_MODES
 #define STR_TRAINER currentLangStrings->STR_TRAINER
 #define STR_TRIM currentLangStrings->STR_TRIM
 #define STR_TRIMINC currentLangStrings->STR_TRIMINC
@@ -1102,6 +1102,7 @@
 #define STR_ISRM_RF_PROTOCOLS currentLangStrings->STR_ISRM_RF_PROTOCOLS
 #define STR_JACK_MODES currentLangStrings->STR_JACK_MODES
 #define STR_MMMINV currentLangStrings->STR_MMMINV
+#define STR_MODEL_USBMODES currentLangStrings->STR_MODEL_USBMODES
 #define STR_MODULE_PROTOCOLS currentLangStrings->STR_MODULE_PROTOCOLS
 #define STR_MONTHS currentLangStrings->STR_MONTHS
 #define STR_OFFON currentLangStrings->STR_OFFON

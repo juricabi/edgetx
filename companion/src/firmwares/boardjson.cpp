@@ -125,6 +125,24 @@ void BoardJson::afterLoadFixups(Board::Type board, InputsTable * inputs, Switche
     }
   }
 
+  // Accl needs the SC7U22 IMU (IMU_SC7U22 in the radio targets)
+  if (IS_RADIOMASTER_TX15(board) || IS_RADIOMASTER_TX16SMK3(board) ||
+      IS_RADIOMASTER_GX15(board) || IS_RADIOMASTER_GX10(board) ||
+      IS_HELLORADIOSKY_V15(board) || IS_HELLORADIOSKY_V16(board)) {
+    if (getInputIndex(inputs, "G_FORCE", Board::LVT_TAG) < 0) {
+      InputDefn defn;
+      defn.type = AIT_FLEX;
+      defn.tag = "G_FORCE";
+      defn.name = "Accl";
+      defn.shortName = "Accl";
+      defn.flexType = FLEX_NONE;
+      defn.inverted = false;
+      defn.cfgYaml = Board::LVT_TAG;
+      defn.refYaml = Board::LVT_TAG;  //  non-default
+      inputs->insert(inputs->end(), defn);
+    }
+  }
+
   // Set default labels for LUX inputs if not provided by JSON
   for (auto &defn : *inputs) {
     if (defn.type == AIT_LUX) {
@@ -237,6 +255,9 @@ const int BoardJson::getCapability(const Board::Capability capability) const
 
     case Board::StatusLedColors:
       return m_hardware.status_led_colors;
+
+    case Board::HasTrainerJackCrossover:
+      return m_hardware.trainer_jack_crossover;
 
     case Board::HasStatusLedPwm:
       return m_hardware.status_led_pwm;
@@ -841,7 +862,8 @@ const bool BoardJson::isInputAvailable(int index) const
 bool BoardJson::isInputAvailable(const InputDefn & defn)
 {
   return (defn.type == Board::AIT_STICK ||
-          (defn.type == Board::AIT_FLEX && defn.flexType != Board::FLEX_NONE && !isInputFlexJoystickAxis(defn)));
+          (defn.type == Board::AIT_FLEX && (defn.flexType != Board::FLEX_NONE || isInputFlexGyroAxis(defn)) &&
+           !isInputFlexJoystickAxis(defn)));
 }
 
 const bool BoardJson::isInputCalibrated(int index) const
@@ -894,7 +916,8 @@ bool BoardJson::isInputFlexGyroAxis(const InputDefn & defn)
   const char* val = defn.tag.data();
 
   return (defn.type == Board::AIT_FLEX && defn.tag.size() > 5 &&
-          val[0] == 'T' && val[1] == 'I'  && val[2] == 'L' && val[3] == 'T' && val[4] == '_' && (val[5] == 'X' || val[5] == 'Y'));
+          ((val[0] == 'T' && val[1] == 'I'  && val[2] == 'L' && val[3] == 'T' && val[4] == '_' && (val[5] == 'X' || val[5] == 'Y')) ||
+           defn.tag == "G_FORCE"));
 }
 
 const bool BoardJson::isInputFlexJoystickAxis(int index) const
@@ -1143,8 +1166,10 @@ bool BoardJson::loadFile(Board::Type board, QString hwdefn, InputsTable * inputs
               defn.refYaml = LVT_NAME;
           }
 
-          if (!o.value("inverted").isUndefined())
-            defn.inverted = o.value("inverted").toBool();
+          if (!o.value("inverted").isUndefined()) {
+            const QJsonValue inv = o.value("inverted");
+            defn.inverted = inv.isString() ? !inv.toString().isEmpty() : inv.toBool();
+          }
 
           if (!o.value("label").isUndefined())
             defn.name = o.value("label").toString().toStdString();
@@ -1340,6 +1365,12 @@ bool BoardJson::loadFile(Board::Type board, QString hwdefn, InputsTable * inputs
     hardware.surface = o.value("surface").toBool();
     hardware.cpu = o.value("cpu").toString().toStdString();
     hardware.cpu_type = o.value("cpu_type").toString().toStdString();
+  }
+
+  if (obj.value("trainer").isObject()) {
+    const QJsonObject &o = obj.value("trainer").toObject();
+
+    hardware.trainer_jack_crossover = o.value("trainer_jack_crossover").toBool();
   }
 
   if (obj.value("identity").isObject()) {

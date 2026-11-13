@@ -144,11 +144,12 @@
 #define TR_AUX_SERIAL_MODES_9         "디버그"
 #define TR_AUX_SERIAL_MODES_10        "SpaceMouse"
 #define TR_AUX_SERIAL_MODES_11        "외부 모듈"
+#define TR_GLOBAL                     "전역"
 #define TR_SWTYPES_1                  "없음"
 #define TR_SWTYPES_2                  "토글"
 #define TR_SWTYPES_3                  "2단"
 #define TR_SWTYPES_4                  "3단"
-#define TR_SWTYPES_5                  "Global"
+#define TR_SWTYPES_5                  TR_GLOBAL
 #define TR_POTTYPES_1                 "없음"
 #define TR_POTTYPES_2                 "다이얼"
 #define TR_POTTYPES_3                 TR("클릭 다이얼", "중심 클릭 다이얼")
@@ -167,6 +168,11 @@
 #define TR_USBMODES_2                 TR("조이스틱", "조이스틱")
 #define TR_USBMODES_3                 TR("SD카드", "저장소")
 #define TR_USBMODES_4                 "시리얼"
+#define TR_MODEL_USBMODES_1           TR_GLOBAL
+#define TR_MODEL_USBMODES_2           TR_USBMODES_1
+#define TR_MODEL_USBMODES_3           TR_USBMODES_2
+#define TR_MODEL_USBMODES_4           TR_USBMODES_3
+#define TR_MODEL_USBMODES_5           TR_USBMODES_4
 #define TR_JACK_MODES_1               "선택 요청"
 #define TR_JACK_MODES_2               "오디오"
 #define TR_JACK_MODES_3               "트레이너"
@@ -197,7 +203,7 @@
 #define TR_CURVE_TYPES_1              "표준"
 #define TR_CURVE_TYPES_2              "사용자 정의"
 
-#define TR_ADCFILTERVALUES_1           "전역"
+#define TR_ADCFILTERVALUES_1           TR_GLOBAL
 #define TR_ADCFILTERVALUES_2           "끔"
 #define TR_ADCFILTERVALUES_3           "켬"
 
@@ -366,6 +372,7 @@
 
 #define TR_IMU_VSRCRAW_1            "기울기X"
 #define TR_IMU_VSRCRAW_2            "기울기Y"
+#define TR_IMU_VSRCRAW_3             "Accl"
 
 #define TR_CYC_VSRCRAW_1            "사이클릭1"
 #define TR_CYC_VSRCRAW_2            "사이클릭2"
@@ -568,6 +575,9 @@
 #define TR_TRAINER_SHUTDOWN_ALARM         TR("트레이너 상태 확인", "종료 시 트레이너 확인")
 #define TR_MODEL_STILL_POWERED            "모델 전원이 켜져 있음"
 #define TR_TRAINER_STILL_CONNECTED        TR("트레이너 연결됨", "트레이너 아직 연결됨")
+#define TR_TRAINER_JACK_MODE           "Trainer lead"
+#define TR_TRAINER_JACK_MODES_1        "Crossover"
+#define TR_TRAINER_JACK_MODES_2        "Standard"
 #define TR_USB_STILL_CONNECTED            "USB 연결 중"
 
 #define TR_MODEL_SHUTDOWN                 "모델을 종료할까요?"
@@ -743,12 +753,10 @@
 #define TR_MULTI_SERVOFREQ              TR("서보 속도", "서보 업데이트 속도")
 #define TR_MULTI_MAX_THROW              TR("최대 스로우", "최대 이동량 허용")
 #define TR_MULTI_RFCHAN                 TR("RF 채널", "RF 채널 선택")
-#define TR_AFHDS3_RX_FREQ               TR("수신기 주파수", "수신기 RF 주파수")
 #define TR_AFHDS3_ONE_TO_ONE_TELEMETRY  TR("단일/텔레메트리", "Unicast/텔레메트리 모드")
 #define TR_AFHDS3_ONE_TO_MANY           "멀티캐스트"
 
 #define TR_AFHDS3_ACTUAL_POWER          TR("실제 출력", "실제 RF 출력")
-#define TR_AFHDS3_POWER_SOURCE          TR("전원 소스", "전원 공급 방식")
 #define TR_IBUS2_SENSORS_MODE_ONLY     "Only in the iBUS2 mode can the sensors be set."
 #define TR_GPS_COORDS_FORMAT            TR("GPS 좌표", "좌표 표시 형식")
 #define TR_VARIO                        TR("바리오", "수직 속도계")
