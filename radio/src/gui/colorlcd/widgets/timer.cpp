@@ -340,7 +340,13 @@ class TimerWidget : public Widget
       lv_obj_set_pos(unit1, U1_X, U_Y);
       minusLabel = createDigitsLabel();
       lv_label_set_text(minusLabel, "-");
-      lv_obj_align_to(minusLabel, digits0, LV_ALIGN_OUT_LEFT_TOP, 1, -1);
+      // Left of digits0, where lv_obj_align_to(minusLabel, digits0,
+      // LV_ALIGN_OUT_LEFT_TOP, 1, -1) puts it. Not with lv_obj_align_to(): it
+      // updates the whole screen's layout, and delayedInit() runs while LVGL
+      // draws the screen, which drops the redraw of everything that moves (a
+      // stale band through other widgets' text until they change)
+      lv_obj_set_pos(minusLabel, D0_X - getTextWidth("-", 1, FONT(XL)) + 1,
+                     D_Y - 1);
     }
 
     if (!timerArc) {
